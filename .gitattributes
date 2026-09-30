@@ -1,0 +1,14 @@
+# Текстовые файлы хранятся с LF, чтобы переводы строк не давали ложных изменений
+* text=auto eol=lf
+
+# Пакетные файлы Windows корректно работают только с CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Двоичные файлы
+*.png binary
+*.ico binary
+*.xlsx binary
+*.pdf binary
+*.exe binary
+*.dll binary

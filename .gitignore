@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+python/build/
+python/dist/
+
+# C++ / CMake
+cpp/build/
+CMakeUserPresets.json
+
+# IDE и ОС
+.vscode/
+.idea/
+*.user
+Thumbs.db
+Desktop.ini
+
+# Временные файлы открытых документов Office
+~$*
