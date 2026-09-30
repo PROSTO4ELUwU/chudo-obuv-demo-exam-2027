@@ -5,7 +5,7 @@ import traceback
 from types import TracebackType
 
 import psycopg
-from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+from PySide6.QtCore import QLibraryInfo, QLocale, Qt, QTranslator
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication
 
@@ -27,6 +27,18 @@ def install_russian_translation(app: QApplication) -> None:
         app.installTranslator(translator)
 
 
+def configure_application(app: QApplication) -> None:
+    """Оформление по руководству по стилю и русский перевод стандартных диалогов."""
+    app.setApplicationName(APP_NAME)
+    # Оформление заказчика светлое: при тёмной теме Windows Qt иначе
+    # берёт палитру с белым текстом, и он сливается с белым фоном
+    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    app.setWindowIcon(QIcon(str(ICON_FILE)))
+    app.setFont(QFont(FONT_FAMILY, 11))
+    app.setStyleSheet(STYLE_SHEET)
+    install_russian_translation(app)
+
+
 def handle_unexpected_error(error_type: type[BaseException], error: BaseException,
                             error_traceback: TracebackType | None) -> None:
     """Последний рубеж: непредвиденная ошибка показывается, а не закрывает программу."""
@@ -44,11 +56,7 @@ def handle_unexpected_error(error_type: type[BaseException], error: BaseExceptio
 def main() -> int:
     """Запускает приложение и возвращает код завершения."""
     app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
-    app.setWindowIcon(QIcon(str(ICON_FILE)))
-    app.setFont(QFont(FONT_FAMILY, 11))
-    app.setStyleSheet(STYLE_SHEET)
-    install_russian_translation(app)
+    configure_application(app)
     sys.excepthook = handle_unexpected_error
 
     try:

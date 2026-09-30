@@ -5,6 +5,7 @@ MAIN_BACKGROUND = "#FFFFFF"
 EXTRA_BACKGROUND = "#D2F6E7"
 ACCENT_COLOR = "#70B2AF"
 LOW_STOCK_COLOR = "#FF8080"
+TEXT_COLOR = "#1F2D2B"
 SECONDARY_TEXT = "#5F6B69"
 BORDER_COLOR = "#9DBFBC"
 
@@ -12,6 +13,7 @@ STYLE_SHEET = f"""
 QWidget {{
     font-family: "{FONT_FAMILY}";
     font-size: 11pt;
+    color: {TEXT_COLOR};
 }}
 QMainWindow, QStackedWidget, QScrollArea, #cardsContainer {{
     background: {MAIN_BACKGROUND};
