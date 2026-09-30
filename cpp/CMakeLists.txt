@@ -14,10 +14,13 @@ qt_standard_project_setup()
 # Логика и окна собраны в библиотеку: её используют и приложение, и тесты
 qt_add_library(chudo_obuv_core STATIC
     src/AppConfig.cpp src/AppConfig.h
+    src/CatalogFilter.cpp src/CatalogFilter.h
     src/Database.cpp src/Database.h
     src/Errors.h
     src/Formatting.cpp src/Formatting.h
+    src/Models.cpp src/Models.h
     src/Money.cpp src/Money.h
+    src/OrderDraft.cpp src/OrderDraft.h
     src/Pricing.cpp src/Pricing.h
 )
 target_include_directories(chudo_obuv_core PUBLIC src)
