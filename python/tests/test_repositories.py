@@ -90,6 +90,12 @@ def test_total_quantity_sums_all_sizes(db):
     assert product_by_name(db, ZVEZDOCHKA).total_quantity == 6 * 20
 
 
+def test_get_product_matches_catalog(db):
+    product = product_by_name(db, ZVEZDOCHKA)
+    assert ProductRepository(db).get_product(product.product_id, date(2026, 9, 30)) == product
+    assert ProductRepository(db).get_product(-1, date(2026, 9, 30)) is None
+
+
 def test_create_order_writes_off_stock(db):
     orders = OrderRepository(db)
     product, position = first_position(db, ZVEZDOCHKA)

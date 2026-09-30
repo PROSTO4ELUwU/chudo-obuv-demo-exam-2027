@@ -19,6 +19,7 @@ from chudo_obuv.models import GUEST, Role, User
 from chudo_obuv.ui.catalog_page import CatalogPage
 from chudo_obuv.ui.login_page import LoginPage
 from chudo_obuv.ui.pages import AppContext, Page
+from chudo_obuv.ui.product_page import ProductPage
 
 LOGO_SIZE = 56
 
@@ -94,6 +95,10 @@ class MainWindow(QMainWindow):
         """Выход из системы на страницу входа."""
         self._context.user = GUEST
         self._reset_stack(LoginPage(self._context))
+
+    def show_product(self, product_id: int) -> None:
+        """Открывает форму просмотра выбранного товара."""
+        self._open_page(ProductPage(self._context, product_id))
 
     def go_back(self) -> None:
         """Возвращает на предыдущую страницу."""

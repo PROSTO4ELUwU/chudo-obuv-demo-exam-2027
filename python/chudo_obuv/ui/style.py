@@ -18,10 +18,10 @@ QWidget {{
 QMainWindow, QStackedWidget, QScrollArea, #cardsContainer {{
     background: {MAIN_BACKGROUND};
 }}
-#header, #filterPanel {{
+#header, #panel {{
     background: {EXTRA_BACKGROUND};
 }}
-#filterPanel {{
+#panel {{
     border-radius: 6px;
 }}
 #appTitle {{

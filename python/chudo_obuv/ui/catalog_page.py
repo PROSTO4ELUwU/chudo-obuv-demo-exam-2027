@@ -47,7 +47,7 @@ class CatalogPage(Page):
         self._sort_combo.currentTextChanged.connect(self._apply_filters)
         self._found_label = QLabel(objectName="hint")
 
-        filter_panel = QFrame(objectName="filterPanel")
+        filter_panel = QFrame(objectName="panel")
         filters = QHBoxLayout(filter_panel)
         filters.addWidget(QLabel("Поиск:"))
         filters.addWidget(self._search_edit, stretch=1)
@@ -98,10 +98,16 @@ class CatalogPage(Page):
         self._category_combo.blockSignals(False)
 
     def _create_cards(self) -> None:
+        """Карточки открывают форму товара, если пользователю доступен заказ."""
         for card in self._cards.values():
             card.deleteLater()
-        self._cards = {product.product_id: ProductCard(product, clickable=False)
-                       for product in self._products}
+        clickable = self.context.user.can_order
+        self._cards = {}
+        for product in self._products:
+            card = ProductCard(product, clickable)
+            card.clicked.connect(lambda product_id=product.product_id:
+                                 self.navigator.show_product(product_id))
+            self._cards[product.product_id] = card
 
     def _apply_filters(self) -> None:
         """Показывает карточки, прошедшие поиск и фильтр, в выбранном порядке.

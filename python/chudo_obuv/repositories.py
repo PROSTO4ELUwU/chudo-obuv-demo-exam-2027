@@ -65,7 +65,7 @@ class ProductRepository:
     """Каталог товаров."""
 
     # Скидка зависит от заказов модели в любом размере за предыдущий месяц
-    _PRODUCTS_QUERY = """
+    _PRODUCTS_SELECT = """
         SELECT p.product_id, p.product_name, c.category_name, m.manufacturer_name,
                p.description, p.composition, p.price, p.image_file,
                COALESCE(SUM(si.quantity), 0) AS total_quantity,
@@ -82,37 +82,51 @@ class ProductRepository:
         JOIN categories AS c ON c.category_id = p.category_id
         JOIN manufacturers AS m ON m.manufacturer_id = p.manufacturer_id
         LEFT JOIN stock_items AS si ON si.product_id = p.product_id
-        GROUP BY p.product_id, c.category_name, m.manufacturer_name
-        ORDER BY p.product_id
     """
+    _PRODUCTS_GROUP_BY = " GROUP BY p.product_id, c.category_name, m.manufacturer_name"
 
     def __init__(self, database: Database) -> None:
         self._database = database
 
     def list_products(self, calculation_date: date) -> list[Product]:
         """Каталог с ценами, рассчитанными на указанную дату."""
-        period_start, period_end = previous_month_bounds(calculation_date)
         rows = self._database.connection.execute(
-            self._PRODUCTS_QUERY, {"period_start": period_start, "period_end": period_end}
+            self._PRODUCTS_SELECT + self._PRODUCTS_GROUP_BY + " ORDER BY p.product_id",
+            self._previous_month(calculation_date),
         ).fetchall()
-        products = []
-        for (product_id, name, category, manufacturer, description, composition,
-             base_price, image_file, total_quantity, has_recent_orders) in rows:
-            discount = discount_percent(has_recent_orders)
-            products.append(Product(
-                product_id=product_id,
-                name=name,
-                category=category,
-                manufacturer=manufacturer,
-                description=description,
-                composition=composition,
-                base_price=base_price,
-                discount=discount,
-                price=price_with_discount(base_price, discount),
-                total_quantity=total_quantity,
-                image_file=image_file,
-            ))
-        return products
+        return [self._to_product(row) for row in rows]
+
+    def get_product(self, product_id: int, calculation_date: date) -> Product | None:
+        """Модель с ценой на указанную дату или None, если её нет в каталоге."""
+        row = self._database.connection.execute(
+            self._PRODUCTS_SELECT + " WHERE p.product_id = %(product_id)s" + self._PRODUCTS_GROUP_BY,
+            {**self._previous_month(calculation_date), "product_id": product_id},
+        ).fetchone()
+        return self._to_product(row) if row else None
+
+    @staticmethod
+    def _previous_month(calculation_date: date) -> dict[str, date]:
+        period_start, period_end = previous_month_bounds(calculation_date)
+        return {"period_start": period_start, "period_end": period_end}
+
+    @staticmethod
+    def _to_product(row: tuple) -> Product:
+        (product_id, name, category, manufacturer, description, composition,
+         base_price, image_file, total_quantity, has_recent_orders) = row
+        discount = discount_percent(has_recent_orders)
+        return Product(
+            product_id=product_id,
+            name=name,
+            category=category,
+            manufacturer=manufacturer,
+            description=description,
+            composition=composition,
+            base_price=base_price,
+            discount=discount,
+            price=price_with_discount(base_price, discount),
+            total_quantity=total_quantity,
+            image_file=image_file,
+        )
 
     def list_categories(self) -> list[str]:
         """Названия всех категорий для фильтра."""
