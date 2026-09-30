@@ -21,9 +21,17 @@ public:
 
     void login(const User &user) override;
     void logout() override;
+    void showProduct(int productId) override;
+    void showOrderDraft() override;
+    void returnAfterOrder() override;
     void goBack() override;
 
+protected:
+    // Закрытие окна с неподтверждённым заказом требует подтверждения
+    void closeEvent(QCloseEvent *event) override;
+
 private:
+    bool confirmDraftLoss();
     QWidget *buildHeader();
     void openPage(Page *page);
     void removeCurrentPage();

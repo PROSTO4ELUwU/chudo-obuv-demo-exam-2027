@@ -14,6 +14,10 @@ public:
 
     virtual void login(const User &user) = 0;
     virtual void logout() = 0;
+    virtual void showProduct(int productId) = 0;
+    virtual void showOrderDraft() = 0;
+    // После подтверждения заказа или отказа от него — туда, где начат выбор товаров
+    virtual void returnAfterOrder() = 0;
     virtual void goBack() = 0;
 };
 

@@ -9,8 +9,10 @@
 class ProductCard;
 class QComboBox;
 class QFrame;
+class QHBoxLayout;
 class QLabel;
 class QLineEdit;
+class QPushButton;
 class QVBoxLayout;
 
 // Главная форма: каталог моделей обуви в виде карточек. Авторизованным
@@ -31,6 +33,8 @@ public:
 
 private:
     QFrame *buildFilterPanel();
+    QHBoxLayout *buildActions();
+    void updateDraftButton();
     void fillCategories(const QStringList &categories);
     void createCards();
     void applyFilters();
@@ -41,6 +45,7 @@ private:
     QComboBox *m_categoryCombo = nullptr;
     QComboBox *m_sortCombo = nullptr;
     QLabel *m_foundLabel = nullptr;
+    QPushButton *m_draftButton = nullptr;
     QLabel *m_emptyLabel = nullptr;
     QWidget *m_cardsContainer = nullptr;
     QVBoxLayout *m_cardsLayout = nullptr;

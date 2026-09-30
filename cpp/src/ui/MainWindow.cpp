@@ -2,7 +2,11 @@
 
 #include "ui/CatalogPage.h"
 #include "ui/LoginPage.h"
+#include "ui/Messages.h"
+#include "ui/OrderDraftPage.h"
+#include "ui/ProductPage.h"
 
+#include <QCloseEvent>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -88,8 +92,45 @@ void MainWindow::login(const User &user)
 
 void MainWindow::logout()
 {
+    if (!confirmDraftLoss())
+        return;
+    m_context.draft.clear();
     m_context.user = User::guest();
     resetStack(new LoginPage(m_context));
+}
+
+void MainWindow::showProduct(int productId)
+{
+    openPage(new ProductPage(m_context, productId));
+}
+
+void MainWindow::showOrderDraft()
+{
+    openPage(new OrderDraftPage(m_context));
+}
+
+void MainWindow::returnAfterOrder()
+{
+    while (!qobject_cast<CatalogPage *>(m_stack->currentWidget()))
+        removeCurrentPage();
+    activate(static_cast<Page *>(m_stack->currentWidget()));
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (confirmDraftLoss())
+        event->accept();
+    else
+        event->ignore();
+}
+
+bool MainWindow::confirmDraftLoss()
+{
+    if (m_context.draft.isEmpty())
+        return true;
+    return Messages::askConfirmation(this, QStringLiteral("Формируемый заказ не подтверждён, "
+                                                          "выбранные товары будут потеряны.\n"
+                                                          "Продолжить?"));
 }
 
 void MainWindow::goBack()

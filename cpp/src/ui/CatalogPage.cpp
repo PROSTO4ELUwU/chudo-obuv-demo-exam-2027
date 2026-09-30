@@ -1,6 +1,7 @@
 #include "ui/CatalogPage.h"
 
 #include "CatalogFilter.h"
+#include "Formatting.h"
 #include "ui/Messages.h"
 #include "ui/ProductCard.h"
 #include "ui/Widgets.h"
@@ -10,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QScrollArea>
 #include <QVBoxLayout>
 
@@ -36,8 +38,34 @@ CatalogPage::CatalogPage(AppContext &context)
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(16, 12, 16, 12);
     layout->addWidget(buildFilterPanel());
+    layout->addLayout(buildActions());
     layout->addWidget(m_emptyLabel);
     layout->addWidget(scroll, 1);
+}
+
+QHBoxLayout *CatalogPage::buildActions()
+{
+    // Переход к формируемому заказу
+    m_draftButton = new QPushButton;
+    m_draftButton->setToolTip(QStringLiteral("Просмотреть выбранные товары и подтвердить заказ"));
+    connect(m_draftButton, &QPushButton::clicked, this, [this] { navigator().showOrderDraft(); });
+    Widgets::hideUnless(m_context.user.canOrder(), {m_draftButton});
+
+    auto *layout = new QHBoxLayout;
+    layout->addStretch();
+    layout->addWidget(m_draftButton);
+    return layout;
+}
+
+void CatalogPage::updateDraftButton()
+{
+    // Кнопка формируемого заказа показывает количество выбранных пар
+    const OrderDraft &draft = m_context.draft;
+    m_draftButton->setEnabled(!draft.isEmpty());
+    m_draftButton->setText(draft.isEmpty()
+                               ? QStringLiteral("Формируемый заказ")
+                               : QStringLiteral("Формируемый заказ: ")
+                                     + Formatting::pairs(draft.pairsCount()));
 }
 
 QFrame *CatalogPage::buildFilterPanel()
@@ -76,6 +104,7 @@ QFrame *CatalogPage::buildFilterPanel()
 
 void CatalogPage::onActivated()
 {
+    updateDraftButton();
     QStringList categories;
     try {
         m_products = m_context.products.listProducts(QDate::currentDate());
@@ -109,9 +138,16 @@ void CatalogPage::createCards()
         card->deleteLater();
     }
     m_cards.clear();
-    // Карточки сразу получают родителя, поэтому удаляются вместе со страницей
-    for (const Product &product : m_products)
-        m_cards.insert(product.id, new ProductCard(product, false, m_cardsContainer));
+    // Карточки сразу получают родителя, поэтому удаляются вместе со страницей;
+    // форму товара открывают только те, кому доступен заказ
+    const bool clickable = m_context.user.canOrder();
+    for (const Product &product : m_products) {
+        auto *card = new ProductCard(product, clickable, m_cardsContainer);
+        const int productId = product.id;
+        connect(card, &ProductCard::clicked, this,
+                [this, productId] { navigator().showProduct(productId); });
+        m_cards.insert(productId, card);
+    }
 }
 
 void CatalogPage::applyFilters()
