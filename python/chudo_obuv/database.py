@@ -34,6 +34,10 @@ class Database:
             )
         return self._connection
 
+    def check_connection(self) -> None:
+        """Проверяет, что сервер доступен и отвечает; иначе выбрасывает psycopg.Error."""
+        self.connection.execute("SELECT 1")
+
     def close(self) -> None:
         """Закрывает соединение при выходе из приложения."""
         if self._connection is not None:

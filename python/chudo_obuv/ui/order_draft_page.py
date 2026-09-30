@@ -113,7 +113,8 @@ class OrderDraftPage(Page):
             # Значение по умолчанию фиксирует позицию текущей строки цикла:
             # без него все обработчики получили бы позицию из последней строки
             quantity_spin.valueChanged.connect(
-                lambda quantity, item_id=line.stock_item_id: self._change_quantity(item_id, quantity))
+                lambda quantity, item_id=line.stock_item_id:
+                self._change_quantity(item_id, quantity))
             self._table.setCellWidget(row, 3, quantity_spin)
 
             remove_button = QPushButton("Удалить")
@@ -140,7 +141,8 @@ class OrderDraftPage(Page):
 
     def _update_total(self) -> None:
         draft = self.context.draft
-        self._total_label.setText(f"Итого: {pairs(draft.pairs_count)} на сумму {format_money(draft.total)}")
+        self._total_label.setText(f"Итого: {pairs(draft.pairs_count)} "
+                                  f"на сумму {format_money(draft.total)}")
 
     def _change_quantity(self, stock_item_id: int, quantity: int) -> None:
         try:
@@ -154,7 +156,8 @@ class OrderDraftPage(Page):
         self._update_total()
 
     def _remove_line(self, stock_item_id: int) -> None:
-        line = next(line for line in self.context.draft.lines if line.stock_item_id == stock_item_id)
+        line = next(line for line in self.context.draft.lines
+                    if line.stock_item_id == stock_item_id)
         if messages.ask_confirmation(self, f"Удалить из заказа «{line.product_name}», "
                                            f"размер {format_size(line.size)}?"):
             self.context.draft.remove(stock_item_id)

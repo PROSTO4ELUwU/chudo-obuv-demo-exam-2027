@@ -177,8 +177,9 @@ class MainWindow(QMainWindow):
 
         user = self._context.user
         signed_in = not isinstance(page, LoginPage)
+        show_role = signed_in and user.role is not Role.GUEST
         self._user_name.setText(user.full_name if signed_in else "")
-        self._user_role.setText(user.role.value if signed_in and user.role is not Role.GUEST else "")
+        self._user_role.setText(user.role.value if show_role else "")
         self._logout_button.setText("Войти" if user.role is Role.GUEST else "Выйти")
         self._logout_button.setVisible(signed_in)
         page.on_activated()

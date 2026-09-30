@@ -64,7 +64,7 @@ def main() -> int:
 
     try:
         database = Database(load_database_settings())
-        database.connection
+        database.check_connection()
     except (OSError, KeyError, psycopg.Error) as error:
         messages.show_error(
             None,

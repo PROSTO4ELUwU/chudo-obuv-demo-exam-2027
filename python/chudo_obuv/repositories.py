@@ -10,7 +10,6 @@ from chudo_obuv.models import OrderLine, OrderSummary, Product, Role, StockPosit
 from chudo_obuv.order_draft import DraftLine
 from chudo_obuv.pricing import discount_percent, previous_month_bounds, price_with_discount
 
-
 LAST_LINE_MESSAGE = ("Это единственная позиция заказа, поэтому удалить её нельзя.\n"
                      "Чтобы отменить заказ полностью, удалите его в списке заказов.")
 
@@ -102,9 +101,10 @@ class ProductRepository:
 
     def get_product(self, product_id: int, calculation_date: date) -> Product | None:
         """Модель с ценой на указанную дату или None, если её нет в каталоге."""
+        query = (self._PRODUCTS_SELECT + " WHERE p.product_id = %(product_id)s"
+                 + self._PRODUCTS_GROUP_BY)
         row = self._database.connection.execute(
-            self._PRODUCTS_SELECT + " WHERE p.product_id = %(product_id)s" + self._PRODUCTS_GROUP_BY,
-            {**self._previous_month(calculation_date), "product_id": product_id},
+            query, {**self._previous_month(calculation_date), "product_id": product_id}
         ).fetchone()
         return self._to_product(row) if row else None
 

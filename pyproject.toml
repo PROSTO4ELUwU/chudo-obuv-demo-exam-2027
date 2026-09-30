@@ -1,0 +1,24 @@
+# Настройки инструментов Python-части: тесты (pytest) и проверка стиля кода (ruff).
+# Запуск из корня репозитория: python -m pytest, ruff check
+
+[tool.pytest.ini_options]
+pythonpath = ["python"]
+testpaths = ["python/tests"]
+# Русские названия тестов выводятся как есть, а не \u-последовательностями
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["python", "database"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "N", "SIM", "PL", "RUF"]
+# RUF001–RUF003: «ёлочки», тире и кириллица в строках — нормальный русский текст;
+# PLR2004: пороги «пять» и «три» пар вынесены в константы модели;
+# PLR0913: у dataclass-моделей много полей по предметной области
+ignore = ["RUF001", "RUF002", "RUF003", "PLR2004", "PLR0913"]
+
+[tool.ruff.lint.pep8-naming]
+# Переопределённые обработчики событий Qt сохраняют имена Qt (closeEvent и т. п.)
+extend-ignore-names = ["*Event"]

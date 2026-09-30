@@ -32,7 +32,7 @@ RADUGA = "Кроссовки детские «Радуга» экокожа пе
 def database():
     database = Database(load_database_settings())
     try:
-        database.connection
+        database.check_connection()
     except psycopg.OperationalError as error:
         pytest.skip(f"База данных недоступна: {error}")
     yield database

@@ -150,7 +150,8 @@ def read_sheet(file_name: str) -> list[dict[str, object]]:
     workbook = load_workbook(IMPORT_DIR / file_name, data_only=True)
     rows = workbook.active.iter_rows(values_only=True)
     header = [clean_text(title) for title in next(rows)]
-    return [dict(zip(header, row)) for row in rows if any(cell is not None for cell in row)]
+    return [dict(zip(header, row, strict=True)) for row in rows
+            if any(cell is not None for cell in row)]
 
 
 def load_users() -> list[User]:
@@ -240,7 +241,7 @@ def load_orders(catalog: dict[ProductKey, Product], stock_keys: set[tuple[Produc
         number = int(row["Номер заказа"])
         client_name = clean_text(row["ФИО"])
         if client_name not in logins:
-            raise DataError(f"Заказ №{number}: клиент «{client_name}» не найден среди пользователей")
+            raise DataError(f"Заказ №{number}: клиента «{client_name}» нет среди пользователей")
         order_date = to_date(row["Дата заказа"])
         order = orders.setdefault(number, Order(number, order_date, logins[client_name]))
         if (order.order_date, order.client_login) != (order_date, logins[client_name]):
@@ -251,7 +252,7 @@ def load_orders(catalog: dict[ProductKey, Product], stock_keys: set[tuple[Produc
             raise DataError(f"Заказ №{number}: категория «{product.name}» не совпадает с каталогом")
         size = to_size(row["Размер"])
         if (product.key, size) not in stock_keys:
-            raise DataError(f"Заказ №{number}: нет товарной позиции «{product.name}», размер {size}")
+            raise DataError(f"Заказ №{number}: нет позиции «{product.name}», размер {size}")
         order.items.append(OrderItem(product.key, size, int(row["Количество"]),
                                      to_money(row["Цена за единицу"])))
 

@@ -23,7 +23,7 @@ class OrdersPage(Page):
 
         add_button = accent_button("Добавить заказ")
         add_button.setToolTip("Выбрать товары из каталога для нового заказа")
-        add_button.clicked.connect(lambda: self.navigator.show_catalog_for_order())
+        add_button.clicked.connect(self.navigator.show_catalog_for_order)
         details_button = QPushButton("Состав заказа")
         details_button.clicked.connect(self._open_details)
         delete_button = QPushButton("Удалить заказ")
@@ -33,7 +33,8 @@ class OrdersPage(Page):
         buttons.addWidget(details_button)
         buttons.addWidget(delete_button)
         buttons.addStretch()
-        buttons.addWidget(QLabel("Двойной щелчок по заказу открывает его состав", objectName="hint"))
+        buttons.addWidget(QLabel("Двойной щелчок по заказу открывает его состав",
+                                 objectName="hint"))
 
         self._table = make_table(COLUMNS, stretch_column=2)
         self._table.doubleClicked.connect(self._open_details)
