@@ -11,6 +11,10 @@ from chudo_obuv.order_draft import DraftLine
 from chudo_obuv.pricing import discount_percent, previous_month_bounds, price_with_discount
 
 
+LAST_LINE_MESSAGE = ("Это единственная позиция заказа, поэтому удалить её нельзя.\n"
+                     "Чтобы отменить заказ полностью, удалите его в списке заказов.")
+
+
 class OrderError(Exception):
     """Операция с заказом недопустима; текст показывается пользователю."""
 
@@ -277,10 +281,7 @@ class OrderRepository:
                 (order_item_id,),
             ).fetchone()
             if lines_count <= 1:
-                raise OrderError(
-                    "Это единственная позиция заказа, поэтому удалить её нельзя.\n"
-                    "Чтобы отменить заказ полностью, удалите его в списке заказов."
-                )
+                raise OrderError(LAST_LINE_MESSAGE)
             connection.execute(self._RETURN_TO_STOCK.format(condition="oi.order_item_id = %s"),
                                (order_item_id,))
             connection.execute("DELETE FROM order_items WHERE order_item_id = %s",
