@@ -29,7 +29,9 @@ qt_add_library(chudo_obuv_core STATIC
     src/ui/LoginPage.cpp src/ui/LoginPage.h
     src/ui/MainWindow.cpp src/ui/MainWindow.h
     src/ui/Messages.cpp src/ui/Messages.h
+    src/ui/OrderDetailsPage.cpp src/ui/OrderDetailsPage.h
     src/ui/OrderDraftPage.cpp src/ui/OrderDraftPage.h
+    src/ui/OrdersPage.cpp src/ui/OrdersPage.h
     src/ui/Page.cpp src/ui/Page.h
     src/ui/ProductCard.cpp src/ui/ProductCard.h
     src/ui/ProductPage.cpp src/ui/ProductPage.h

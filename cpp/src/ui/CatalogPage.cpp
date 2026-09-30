@@ -15,8 +15,9 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
-CatalogPage::CatalogPage(AppContext &context)
+CatalogPage::CatalogPage(AppContext &context, bool selectForOrder)
     : Page(context)
+    , m_selectForOrder(selectForOrder)
 {
     m_cardsContainer = new QWidget;
     m_cardsContainer->setObjectName(QStringLiteral("cardsContainer"));
@@ -43,16 +44,34 @@ CatalogPage::CatalogPage(AppContext &context)
     layout->addWidget(scroll, 1);
 }
 
+QString CatalogPage::title() const
+{
+    return m_selectForOrder ? QStringLiteral("Выбор товаров для заказа")
+                            : QStringLiteral("Каталог товаров");
+}
+
 QHBoxLayout *CatalogPage::buildActions()
 {
-    // Переход к формируемому заказу
+    // Переходы к формируемому заказу и к списку заказов
+    const User &user = m_context.user;
     m_draftButton = new QPushButton;
     m_draftButton->setToolTip(QStringLiteral("Просмотреть выбранные товары и подтвердить заказ"));
     connect(m_draftButton, &QPushButton::clicked, this, [this] { navigator().showOrderDraft(); });
-    Widgets::hideUnless(m_context.user.canOrder(), {m_draftButton});
+    Widgets::hideUnless(user.canOrder(), {m_draftButton});
+    auto *ordersButton = new QPushButton(QStringLiteral("Заказы"));
+    ordersButton->setToolTip(QStringLiteral("Список заказов: просмотр состава, добавление и удаление"));
+    connect(ordersButton, &QPushButton::clicked, this, [this] { navigator().showOrders(); });
+    Widgets::hideUnless(user.canManageOrders() && !m_selectForOrder, {ordersButton});
 
     auto *layout = new QHBoxLayout;
+    if (m_selectForOrder) {
+        auto *hint = new QLabel(QStringLiteral("Найдите товар по наименованию и нажмите на "
+                                               "карточку, чтобы выбрать размер и количество"));
+        hint->setObjectName(QStringLiteral("hint"));
+        layout->addWidget(hint);
+    }
     layout->addStretch();
+    layout->addWidget(ordersButton);
     layout->addWidget(m_draftButton);
     return layout;
 }

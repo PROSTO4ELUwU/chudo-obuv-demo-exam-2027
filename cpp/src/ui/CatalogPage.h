@@ -18,15 +18,18 @@ class QVBoxLayout;
 // Главная форма: каталог моделей обуви в виде карточек. Авторизованным
 // пользователям доступны поиск, фильтр по категории и сортировка по цене;
 // они применяются сразу при изменении условий. Гость видит каталог
-// без этих инструментов.
+// без этих инструментов. В режиме выбора товаров (selectForOrder) каталог
+// открыт из списка заказов для нового заказа.
 class CatalogPage : public Page
 {
     Q_OBJECT
 
 public:
-    explicit CatalogPage(AppContext &context);
+    explicit CatalogPage(AppContext &context, bool selectForOrder = false);
 
-    QString title() const override { return QStringLiteral("Каталог товаров"); }
+    QString title() const override;
+
+    bool isSelectingForOrder() const { return m_selectForOrder; }
 
     // Каталог перечитывается при каждом показе: остатки могли измениться
     void onActivated() override;
@@ -39,6 +42,7 @@ private:
     void createCards();
     void applyFilters();
 
+    bool m_selectForOrder = false;
     std::vector<Product> m_products;
     QHash<int, ProductCard *> m_cards;
     QLineEdit *m_searchEdit = nullptr;

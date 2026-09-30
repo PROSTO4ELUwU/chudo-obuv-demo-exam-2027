@@ -23,6 +23,9 @@ public:
     void logout() override;
     void showProduct(int productId) override;
     void showOrderDraft() override;
+    void showOrders() override;
+    void showOrderDetails(int orderId) override;
+    void showCatalogForOrder() override;
     void returnAfterOrder() override;
     void goBack() override;
 

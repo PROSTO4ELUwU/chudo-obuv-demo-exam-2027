@@ -3,7 +3,9 @@
 #include "ui/CatalogPage.h"
 #include "ui/LoginPage.h"
 #include "ui/Messages.h"
+#include "ui/OrderDetailsPage.h"
 #include "ui/OrderDraftPage.h"
+#include "ui/OrdersPage.h"
 #include "ui/ProductPage.h"
 
 #include <QCloseEvent>
@@ -109,9 +111,28 @@ void MainWindow::showOrderDraft()
     openPage(new OrderDraftPage(m_context));
 }
 
+void MainWindow::showOrders()
+{
+    openPage(new OrdersPage(m_context));
+}
+
+void MainWindow::showOrderDetails(int orderId)
+{
+    openPage(new OrderDetailsPage(m_context, orderId));
+}
+
+void MainWindow::showCatalogForOrder()
+{
+    openPage(new CatalogPage(m_context, true));
+}
+
 void MainWindow::returnAfterOrder()
 {
+    // Если заказ добавлялся из списка заказов, возвращаемся к списку,
+    // иначе — в основной каталог
     while (!qobject_cast<CatalogPage *>(m_stack->currentWidget()))
+        removeCurrentPage();
+    if (static_cast<CatalogPage *>(m_stack->currentWidget())->isSelectingForOrder())
         removeCurrentPage();
     activate(static_cast<Page *>(m_stack->currentWidget()));
 }
