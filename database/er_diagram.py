@@ -2,7 +2,7 @@
 
 Скрипт читает из системного каталога СУБД таблицы, столбцы, первичные
 и внешние ключи, описывает диаграмму на языке Graphviz (er_diagram.dot)
-и строит из неё er_diagram.pdf.
+и строит из неё er_diagram.pdf (по заданию) и er_diagram.png (для README).
 
 Запуск из корня репозитория (нужен Graphviz: программа dot в PATH):
     python database/er_diagram.py
@@ -21,6 +21,7 @@ DATABASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = DATABASE_DIR.parent / "config.ini"
 DOT_FILE = DATABASE_DIR / "er_diagram.dot"
 PDF_FILE = DATABASE_DIR / "er_diagram.pdf"
+PNG_FILE = DATABASE_DIR / "er_diagram.png"
 
 ACCENT_COLOR = "#70B2AF"
 EXTRA_BACKGROUND = "#D2F6E7"
@@ -123,14 +124,15 @@ def build_dot(connection: psycopg.Connection) -> str:
 
 
 def main() -> None:
-    """Строит er_diagram.dot и er_diagram.pdf."""
+    """Строит er_diagram.dot, er_diagram.pdf и er_diagram.png."""
     dot = shutil.which("dot")
     if dot is None:
         raise SystemExit("Не найден Graphviz: установите его и добавьте каталог bin в PATH")
     with connect() as connection:
         DOT_FILE.write_text(build_dot(connection), encoding="utf-8", newline="\n")
     subprocess.run([dot, "-Tpdf", str(DOT_FILE), "-o", str(PDF_FILE)], check=True)
-    print(f"Диаграмма построена: {PDF_FILE}")
+    subprocess.run([dot, "-Tpng", "-Gdpi=110", str(DOT_FILE), "-o", str(PNG_FILE)], check=True)
+    print(f"Диаграмма построена: {PDF_FILE}, {PNG_FILE.name}")
 
 
 if __name__ == "__main__":
