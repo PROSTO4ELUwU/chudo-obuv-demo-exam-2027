@@ -2,7 +2,7 @@
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from chudo_obuv.formatting import format_money
 from chudo_obuv.models import Product
@@ -24,6 +24,9 @@ class ProductCard(QFrame):
         super().__init__(parent)
         self.setObjectName("productCard")
         self.setProperty("lowStock", product.is_running_out)
+        # Растяжки внутри карточки иначе делают её растущей по высоте,
+        # и единственная найденная карточка занимала бы весь экран
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self._clickable = clickable
         if clickable:
             self.setCursor(Qt.CursorShape.PointingHandCursor)
