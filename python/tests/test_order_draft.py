@@ -61,6 +61,17 @@ def test_set_quantity_keeps_value_on_error(quantity):
     assert draft.reserved(SIZE_41.stock_item_id) == 1
 
 
+def test_update_available_reduces_quantity():
+    draft = OrderDraft()
+    draft.add(make_product(), SIZE_41, 3)
+    draft.add(make_product(), SIZE_42, 2)
+    draft.update_available(SIZE_41.stock_item_id, 1)
+    draft.update_available(SIZE_42.stock_item_id, 0)
+    size_41, size_42 = draft.lines
+    assert (size_41.quantity, size_41.exceeds_stock) == (1, False)
+    assert (size_42.quantity, size_42.exceeds_stock) == (2, True)
+
+
 def test_remove_and_clear():
     draft = OrderDraft()
     draft.add(make_product(), SIZE_41, 1)

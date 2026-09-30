@@ -168,6 +168,10 @@ class ProductPage(Page):
         except OrderDraftError as error:
             messages.show_warning(self, str(error))
             return
-        messages.show_info(self, f"В заказ добавлено: {self._product.name}, "
-                                 f"размер {format_size(position.size)}, {pairs(quantity)}.")
-        self.navigator.go_back()
+        added = f"{self._product.name}, размер {format_size(position.size)}, {pairs(quantity)}"
+        if messages.ask_choice(self, f"В заказ добавлено: {added}.\n\n"
+                                     "Оформить заказ сейчас или продолжить выбор товаров?",
+                               "Оформить заказ", "Продолжить выбор"):
+            self.navigator.show_order_draft()
+        else:
+            self.navigator.go_back()

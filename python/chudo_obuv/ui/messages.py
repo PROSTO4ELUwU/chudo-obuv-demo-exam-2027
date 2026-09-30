@@ -28,6 +28,16 @@ def show_database_error(parent: QWidget | None, error: Exception) -> None:
     )
 
 
+def ask_choice(parent: QWidget | None, text: str, accept_text: str, reject_text: str) -> bool:
+    """Вопрос с двумя вариантами ответа; True — выбран первый вариант."""
+    box = QMessageBox(QMessageBox.Icon.Question, "Вопрос", text, parent=parent)
+    accept_button = box.addButton(accept_text, QMessageBox.ButtonRole.AcceptRole)
+    box.addButton(reject_text, QMessageBox.ButtonRole.RejectRole)
+    box.setDefaultButton(accept_button)
+    box.exec()
+    return box.clickedButton() is accept_button
+
+
 def ask_confirmation(parent: QWidget | None, text: str) -> bool:
     """Подтверждение необратимого действия; по умолчанию выбрано «Нет»."""
     answer = QMessageBox.question(

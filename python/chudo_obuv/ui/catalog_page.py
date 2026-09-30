@@ -10,12 +10,14 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
 from chudo_obuv.catalog_filter import ALL_CATEGORIES, SortOrder, filter_products
+from chudo_obuv.formatting import pairs
 from chudo_obuv.models import Product
 from chudo_obuv.ui import messages
 from chudo_obuv.ui.pages import AppContext, Page
@@ -58,6 +60,14 @@ class CatalogPage(Page):
         filters.addWidget(self._found_label)
         filter_panel.setVisible(context.user.can_order)
 
+        self._draft_button = QPushButton()
+        self._draft_button.setToolTip("Просмотреть выбранные товары и подтвердить заказ")
+        self._draft_button.clicked.connect(lambda: self.navigator.show_order_draft())
+        actions = QHBoxLayout()
+        actions.addStretch()
+        actions.addWidget(self._draft_button)
+        self._draft_button.setVisible(context.user.can_order)
+
         container = QWidget(objectName="cardsContainer")
         self._cards_layout = QVBoxLayout(container)
         self._cards_layout.setSpacing(10)
@@ -73,11 +83,13 @@ class CatalogPage(Page):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
         layout.addWidget(filter_panel)
+        layout.addLayout(actions)
         layout.addWidget(self._empty_label)
         layout.addWidget(scroll, stretch=1)
 
     def on_activated(self) -> None:
         """Каталог перечитывается при каждом показе: остатки могли измениться."""
+        self._update_draft_button()
         try:
             self._products = self.context.products.list_products(date.today())
             categories = self.context.products.list_categories()
@@ -87,6 +99,13 @@ class CatalogPage(Page):
         self._fill_categories(categories)
         self._create_cards()
         self._apply_filters()
+
+    def _update_draft_button(self) -> None:
+        """Кнопка формируемого заказа показывает количество выбранных пар."""
+        draft = self.context.draft
+        self._draft_button.setEnabled(not draft.is_empty)
+        self._draft_button.setText("Формируемый заказ" if draft.is_empty
+                                   else f"Формируемый заказ: {pairs(draft.pairs_count)}")
 
     def _fill_categories(self, categories: list[str]) -> None:
         """Первый пункт — «Все категории»; выбранная категория сохраняется при обновлении."""
@@ -100,6 +119,9 @@ class CatalogPage(Page):
     def _create_cards(self) -> None:
         """Карточки открывают форму товара, если пользователю доступен заказ."""
         for card in self._cards.values():
+            # deleteLater удаляет карточку только при возврате в цикл событий,
+            # поэтому до этого она скрывается, чтобы не мелькать за диалогами
+            card.hide()
             card.deleteLater()
         clickable = self.context.user.can_order
         self._cards = {}

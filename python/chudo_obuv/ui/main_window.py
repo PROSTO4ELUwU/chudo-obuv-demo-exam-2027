@@ -1,7 +1,7 @@
 """Главное окно: шапка с логотипом и ФИО пользователя, стек страниц."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QCloseEvent, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -16,8 +16,10 @@ from PySide6.QtWidgets import (
 from chudo_obuv import APP_NAME
 from chudo_obuv.config import LOGO_FILE
 from chudo_obuv.models import GUEST, Role, User
+from chudo_obuv.ui import messages
 from chudo_obuv.ui.catalog_page import CatalogPage
 from chudo_obuv.ui.login_page import LoginPage
+from chudo_obuv.ui.order_draft_page import OrderDraftPage
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.product_page import ProductPage
 
@@ -93,12 +95,38 @@ class MainWindow(QMainWindow):
 
     def logout(self) -> None:
         """Выход из системы на страницу входа."""
+        if not self._confirm_draft_loss():
+            return
+        self._context.draft.clear()
         self._context.user = GUEST
         self._reset_stack(LoginPage(self._context))
 
     def show_product(self, product_id: int) -> None:
         """Открывает форму просмотра выбранного товара."""
         self._open_page(ProductPage(self._context, product_id))
+
+    def show_order_draft(self) -> None:
+        """Открывает формируемый заказ."""
+        self._open_page(OrderDraftPage(self._context))
+
+    def return_after_order(self) -> None:
+        """После подтверждения заказа или отказа от него — обратно в каталог."""
+        while not isinstance(self._stack.currentWidget(), CatalogPage):
+            self._remove_current_page()
+        self._activate(self._stack.currentWidget())
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Закрытие окна с неподтверждённым заказом требует подтверждения."""
+        if self._confirm_draft_loss():
+            event.accept()
+        else:
+            event.ignore()
+
+    def _confirm_draft_loss(self) -> bool:
+        if self._context.draft.is_empty:
+            return True
+        return messages.ask_confirmation(self, "Формируемый заказ не подтверждён, выбранные "
+                                               "товары будут потеряны.\nПродолжить?")
 
     def go_back(self) -> None:
         """Возвращает на предыдущую страницу."""

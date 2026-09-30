@@ -28,6 +28,11 @@ class DraftLine:
         """Стоимость позиции."""
         return self.unit_price * self.quantity
 
+    @property
+    def exceeds_stock(self) -> bool:
+        """В позиции больше пар, чем осталось (после проверки при подтверждении)."""
+        return self.quantity > self.available
+
 
 class OrderDraft:
     """Позиции, которые пользователь добавил в заказ, но ещё не подтвердил.
@@ -101,8 +106,15 @@ class OrderDraft:
         line.quantity = quantity
 
     def update_available(self, stock_item_id: int, available: int) -> None:
-        """Запоминает актуальный остаток, полученный из базы при подтверждении."""
-        self._lines[stock_item_id].available = available
+        """Запоминает остаток из базы и уменьшает количество в позиции до него.
+
+        Позиция, которой не осталось совсем, не удаляется молча:
+        пользователь увидит её выделенной и удалит сам.
+        """
+        line = self._lines[stock_item_id]
+        line.available = available
+        if available > 0:
+            line.quantity = min(line.quantity, available)
 
     def remove(self, stock_item_id: int) -> None:
         """Удаляет позицию из заказа."""
