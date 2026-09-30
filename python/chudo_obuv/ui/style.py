@@ -58,6 +58,11 @@ QPushButton[accent="true"] {{
 QPushButton[accent="true"]:hover {{
     border-color: #1F2D2B;
 }}
+QPushButton[accent="true"]:disabled {{
+    background: #E9EFEE;
+    color: #9AA5A3;
+    border-color: #C9D3D1;
+}}
 QLineEdit, QComboBox, QSpinBox, QDateEdit {{
     background: {MAIN_BACKGROUND};
     border: 1px solid {BORDER_COLOR};
@@ -66,6 +71,15 @@ QLineEdit, QComboBox, QSpinBox, QDateEdit {{
 }}
 QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateEdit:focus {{
     border-color: {ACCENT_COLOR};
+}}
+QDateEdit {{
+    min-width: 7em;
+}}
+QSpinBox {{
+    min-width: 4em;
+}}
+QSpinBox::up-button, QSpinBox::down-button {{
+    width: 20px;
 }}
 #productCard {{
     background: {MAIN_BACKGROUND};

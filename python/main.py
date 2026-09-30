@@ -30,6 +30,9 @@ def install_russian_translation(app: QApplication) -> None:
 def configure_application(app: QApplication) -> None:
     """Оформление по руководству по стилю и русский перевод стандартных диалогов."""
     app.setApplicationName(APP_NAME)
+    # Fusion выглядит одинаково на Windows 10 и 11 и не добавляет системный
+    # акцентный цвет, которого нет в руководстве по стилю
+    app.setStyle("Fusion")
     # Оформление заказчика светлое: при тёмной теме Windows Qt иначе
     # берёт палитру с белым текстом, и он сливается с белым фоном
     app.styleHints().setColorScheme(Qt.ColorScheme.Light)
