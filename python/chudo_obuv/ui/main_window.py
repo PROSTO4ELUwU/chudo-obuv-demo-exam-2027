@@ -1,4 +1,4 @@
-"""Главное окно: шапка с логотипом и стек страниц."""
+"""Главное окно: шапка с логотипом и ФИО пользователя, стек страниц."""
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QPushButton,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -14,17 +15,20 @@ from PySide6.QtWidgets import (
 
 from chudo_obuv import APP_NAME
 from chudo_obuv.config import LOGO_FILE
+from chudo_obuv.models import GUEST, Role, User
 from chudo_obuv.ui.catalog_page import CatalogPage
+from chudo_obuv.ui.login_page import LoginPage
 from chudo_obuv.ui.pages import AppContext, Page
 
 LOGO_SIZE = 56
 
 
 class MainWindow(QMainWindow):
-    """Главное окно приложения.
+    """Главное окно приложения — последовательный интерфейс.
 
-    Страницы открываются поверх друг друга в QStackedWidget, поэтому
-    возврат на предыдущую страницу всегда возможен.
+    Страницы открываются поверх друг друга в QStackedWidget, кнопка
+    «Назад» возвращает на предыдущую. После входа первой страницей
+    становится каталог, а ФИО пользователя выводится в правом верхнем углу.
     """
 
     def __init__(self, context: AppContext) -> None:
@@ -42,40 +46,59 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self.resize(1180, 780)
         self.setMinimumSize(960, 640)
-        self.show_catalog()
+        self._reset_stack(LoginPage(context))
 
     def _build_header(self) -> QFrame:
-        """Шапка: логотип и название компании, заголовок текущей страницы."""
+        """Шапка: «Назад», логотип, название и заголовок страницы, пользователь."""
+        self._back_button = QPushButton("← Назад")
+        self._back_button.setToolTip("Вернуться на предыдущую страницу")
+        self._back_button.clicked.connect(self.go_back)
+
         logo = QLabel()
         logo.setPixmap(QPixmap(str(LOGO_FILE)).scaled(
             LOGO_SIZE, LOGO_SIZE,
             Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation,
         ))
         self._page_title = QLabel(objectName="pageTitle")
-
         titles = QVBoxLayout()
         titles.setSpacing(0)
         titles.addWidget(QLabel(APP_NAME, objectName="appTitle"))
         titles.addWidget(self._page_title)
 
+        self._user_name = QLabel(objectName="userName", alignment=Qt.AlignmentFlag.AlignRight)
+        self._user_role = QLabel(objectName="userRole", alignment=Qt.AlignmentFlag.AlignRight)
+        user_box = QVBoxLayout()
+        user_box.setSpacing(0)
+        user_box.addWidget(self._user_name)
+        user_box.addWidget(self._user_role)
+        self._logout_button = QPushButton()
+        self._logout_button.clicked.connect(self.logout)
+
         header = QFrame(objectName="header")
         layout = QHBoxLayout(header)
         layout.setContentsMargins(16, 8, 16, 8)
+        layout.addWidget(self._back_button)
         layout.addWidget(logo)
         layout.addLayout(titles)
         layout.addStretch()
+        layout.addLayout(user_box)
+        layout.addWidget(self._logout_button)
         return header
 
-    def show_catalog(self) -> None:
-        """Открывает каталог товаров."""
-        self._open_page(CatalogPage(self._context))
+    def login(self, user: User) -> None:
+        """Вход выполнен: каталог становится первой страницей."""
+        self._context.user = user
+        self._reset_stack(CatalogPage(self._context))
+
+    def logout(self) -> None:
+        """Выход из системы на страницу входа."""
+        self._context.user = GUEST
+        self._reset_stack(LoginPage(self._context))
 
     def go_back(self) -> None:
         """Возвращает на предыдущую страницу."""
         if self._stack.count() > 1:
-            page = self._stack.currentWidget()
-            self._stack.removeWidget(page)
-            page.deleteLater()
+            self._remove_current_page()
             self._activate(self._stack.currentWidget())
 
     def _open_page(self, page: Page) -> None:
@@ -83,8 +106,26 @@ class MainWindow(QMainWindow):
         self._stack.setCurrentWidget(page)
         self._activate(page)
 
+    def _remove_current_page(self) -> None:
+        page = self._stack.currentWidget()
+        self._stack.removeWidget(page)
+        page.deleteLater()
+
+    def _reset_stack(self, page: Page) -> None:
+        while self._stack.count():
+            self._remove_current_page()
+        self._open_page(page)
+
     def _activate(self, page: Page) -> None:
-        """Заголовок окна соответствует назначению показанной страницы."""
+        """Обновляет заголовки и шапку под показанную страницу."""
         self.setWindowTitle(f"{APP_NAME} — {page.title}")
         self._page_title.setText(page.title)
+        self._back_button.setVisible(self._stack.count() > 1)
+
+        user = self._context.user
+        signed_in = not isinstance(page, LoginPage)
+        self._user_name.setText(user.full_name if signed_in else "")
+        self._user_role.setText(user.role.value if signed_in and user.role is not Role.GUEST else "")
+        self._logout_button.setText("Войти" if user.role is Role.GUEST else "Выйти")
+        self._logout_button.setVisible(signed_in)
         page.on_activated()
