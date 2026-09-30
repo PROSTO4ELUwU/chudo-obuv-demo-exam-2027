@@ -19,7 +19,9 @@ from chudo_obuv.models import GUEST, Role, User
 from chudo_obuv.ui import messages
 from chudo_obuv.ui.catalog_page import CatalogPage
 from chudo_obuv.ui.login_page import LoginPage
+from chudo_obuv.ui.order_details_page import OrderDetailsPage
 from chudo_obuv.ui.order_draft_page import OrderDraftPage
+from chudo_obuv.ui.orders_page import OrdersPage
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.product_page import ProductPage
 
@@ -109,9 +111,27 @@ class MainWindow(QMainWindow):
         """Открывает формируемый заказ."""
         self._open_page(OrderDraftPage(self._context))
 
+    def show_orders(self) -> None:
+        """Открывает список заказов (менеджер и администратор)."""
+        self._open_page(OrdersPage(self._context))
+
+    def show_order_details(self, order_id: int) -> None:
+        """Открывает состав заказа."""
+        self._open_page(OrderDetailsPage(self._context, order_id))
+
+    def show_catalog_for_order(self) -> None:
+        """Открывает каталог для выбора товаров нового заказа из списка заказов."""
+        self._open_page(CatalogPage(self._context, select_for_order=True))
+
     def return_after_order(self) -> None:
-        """После подтверждения заказа или отказа от него — обратно в каталог."""
+        """После подтверждения заказа или отказа от него — туда, где начат выбор товаров.
+
+        Если заказ добавлялся из списка заказов, возвращаемся к списку,
+        иначе — в основной каталог.
+        """
         while not isinstance(self._stack.currentWidget(), CatalogPage):
+            self._remove_current_page()
+        if self._stack.currentWidget().select_for_order:
             self._remove_current_page()
         self._activate(self._stack.currentWidget())
 

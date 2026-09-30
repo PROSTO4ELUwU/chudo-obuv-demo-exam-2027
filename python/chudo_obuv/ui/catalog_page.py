@@ -29,13 +29,17 @@ class CatalogPage(Page):
 
     Авторизованным пользователям доступны поиск, фильтр по категории
     и сортировка по цене; они применяются сразу при изменении условий.
-    Гость видит каталог без этих инструментов.
+    Гость видит каталог без этих инструментов. В режиме select_for_order
+    каталог открыт из списка заказов для выбора товаров нового заказа.
     """
 
     title = "Каталог товаров"
 
-    def __init__(self, context: AppContext) -> None:
+    def __init__(self, context: AppContext, select_for_order: bool = False) -> None:
         super().__init__(context)
+        self.select_for_order = select_for_order
+        if select_for_order:
+            self.title = "Выбор товаров для заказа"
         self._products: list[Product] = []
         self._cards: dict[int, ProductCard] = {}
 
@@ -63,10 +67,18 @@ class CatalogPage(Page):
         self._draft_button = QPushButton()
         self._draft_button.setToolTip("Просмотреть выбранные товары и подтвердить заказ")
         self._draft_button.clicked.connect(lambda: self.navigator.show_order_draft())
-        actions = QHBoxLayout()
-        actions.addStretch()
-        actions.addWidget(self._draft_button)
         self._draft_button.setVisible(context.user.can_order)
+        orders_button = QPushButton("Заказы")
+        orders_button.setToolTip("Список заказов: просмотр состава, добавление и удаление")
+        orders_button.clicked.connect(lambda: self.navigator.show_orders())
+        orders_button.setVisible(context.user.can_manage_orders and not select_for_order)
+        actions = QHBoxLayout()
+        if select_for_order:
+            actions.addWidget(QLabel("Найдите товар по наименованию и нажмите на карточку, "
+                                     "чтобы выбрать размер и количество", objectName="hint"))
+        actions.addStretch()
+        actions.addWidget(orders_button)
+        actions.addWidget(self._draft_button)
 
         container = QWidget(objectName="cardsContainer")
         self._cards_layout = QVBoxLayout(container)

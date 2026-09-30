@@ -15,8 +15,8 @@ def accent_button(text: str) -> QPushButton:
     return button
 
 
-def make_table(headers: list[str]) -> QTableWidget:
-    """Таблица только для просмотра: выделяется строка целиком, первый столбец растягивается."""
+def make_table(headers: list[str], stretch_column: int = 0) -> QTableWidget:
+    """Таблица только для просмотра: выделяется строка целиком, один столбец растягивается."""
     table = QTableWidget(0, len(headers))
     table.setHorizontalHeaderLabels(headers)
     table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -26,7 +26,7 @@ def make_table(headers: list[str]) -> QTableWidget:
     table.verticalHeader().setDefaultSectionSize(36)
     header = table.horizontalHeader()
     header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-    header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+    header.setSectionResizeMode(stretch_column, QHeaderView.ResizeMode.Stretch)
     return table
 
 
