@@ -1,0 +1,90 @@
+// Блок-схема алгоритма работы системы оформления заказа обуви (ГОСТ 19.701-90).
+// Двойные боковые линии — предопределённый процесс (описан отдельно),
+// окружности «А» и «Б» — соединители, заменяющие длинные линии возврата.
+// Сборка PDF: dot -Tpdf docs/algorithm_system.dot -o docs/algorithm_system.pdf
+digraph algorithm_system {
+    graph [fontname="Calibri", fontsize=18, labelloc=t, pad=0.4, nodesep=0.45, ranksep=0.35,
+           splines=ortho, label=<<B>Алгоритм работы системы оформления заказа обуви «Чудо Обувь»</B><BR/> >];
+    node [fontname="Calibri", fontsize=12, shape=box, width=2.9, margin="0.2,0.08"];
+    edge [fontname="Calibri", fontsize=11, arrowsize=0.7];
+
+    start        [label="Начало", style=rounded];
+    login_form   [label="Вывод окна входа", shape=parallelogram];
+    is_guest     [label="Вход как гость?", shape=diamond, width=2.0, height=0.9];
+    guest_role   [label="Роль — неавторизованный\nпользователь (гость)"];
+    input_login  [label="Ввод логина", shape=parallelogram];
+    login_found  [label="Логин есть\nв списке пользователей?", shape=diamond, width=2.6, height=1.1];
+    login_error  [label="Сообщение об ошибке:\nпользователь не найден", shape=parallelogram];
+    load_user    [label="Загрузка ФИО и роли\nпользователя"];
+    to_catalog_a [label="А", shape=circle, width=0.4, fixedsize=true];
+    load_catalog [label="| Загрузка каталога\nи расчёт цены со скидкой\n(отдельный алгоритм) |", shape=record];
+    to_catalog_b [label="Б", shape=circle, width=0.4, fixedsize=true];
+    show_catalog [label="Вывод каталога;\nФИО пользователя —\nв правом верхнем углу", shape=parallelogram];
+    want_exit    [label="Завершить\nработу?", shape=diamond, width=2.0, height=0.9];
+    finish       [label="Конец", style=rounded, width=1.6];
+    action       [label="Действие\nпользователя", shape=diamond, width=2.2, height=1.0];
+
+    orders       [label="| Работа с заказами: просмотр,\nдобавление, удаление;\nизменение — администратор |", shape=record];
+    orders_a     [label="А", shape=circle, width=0.4, fixedsize=true];
+    filter       [label="Отбор по категории\nи поиску, сортировка по цене"];
+    filter_b     [label="Б", shape=circle, width=0.4, fixedsize=true];
+
+    show_product [label="Вывод карточки товара:\nразмерный ряд,\nдоступные размеры", shape=parallelogram];
+    input_item   [label="Выбор размера\nи количества", shape=parallelogram];
+    item_valid   [label="Количество\nне больше доступного?", shape=diamond, width=2.6, height=1.1];
+    item_error   [label="Сообщение\nоб ошибке ввода", shape=parallelogram, width=2.2];
+    add_item     [label="Добавление позиции\nв формируемый заказ"];
+    add_more     [label="Добавить ещё\nтовары?", shape=diamond, width=2.0, height=0.9];
+    add_more_b   [label="Б", shape=circle, width=0.4, fixedsize=true];
+    show_order   [label="Вывод формируемого заказа:\nпозиции, количество, сумма", shape=parallelogram];
+    confirm      [label="Подтвердить\nзаказ?", shape=diamond, width=2.0, height=0.9];
+    cancel_order [label="Отказ от заказа:\nпозиции удаляются", width=2.2];
+    cancel_b     [label="Б", shape=circle, width=0.4, fixedsize=true];
+    save_order   [label="| Сохранение заказа с датой\nи списание остатков\nв одной транзакции |", shape=record];
+    saved        [label="Остатков\nхватило?", shape=diamond, width=2.0, height=0.9];
+    save_error   [label="Сообщение: товара\nне хватает", shape=parallelogram, width=2.2];
+    saved_a      [label="А", shape=circle, width=0.4, fixedsize=true];
+
+    start -> login_form -> is_guest;
+    is_guest:w -> guest_role:n [xlabel="да "];
+    is_guest:s -> input_login:n [xlabel=" нет"];
+    input_login -> login_found;
+    login_found:e -> login_error:n [xlabel=" нет"];
+    login_error:e -> input_login:e;
+    login_found:s -> load_user:n [xlabel=" да"];
+    guest_role:s -> load_catalog:n;
+    load_user:s -> load_catalog:n;
+    to_catalog_a -> load_catalog;
+    load_catalog -> show_catalog;
+    to_catalog_b -> show_catalog;
+    show_catalog -> want_exit;
+    want_exit:e -> finish:w [xlabel="да "];
+    want_exit:s -> action:n [xlabel=" нет"];
+
+    action:w -> orders:n [xlabel="заказы: менеджер,\nадминистратор "];
+    orders -> orders_a;
+    action:e -> filter:n [xlabel=" поиск, фильтр,\nсортировка"];
+    filter -> filter_b;
+    action:s -> show_product:n [xlabel=" выбор товара:\nавторизованный\nпользователь"];
+
+    show_product -> input_item -> item_valid;
+    item_valid:e -> item_error:n [xlabel=" нет"];
+    item_error:e -> input_item:e;
+    item_valid:s -> add_item:n [xlabel=" да"];
+    add_item -> add_more;
+    add_more:e -> add_more_b [xlabel="да "];
+    add_more:s -> show_order:n [xlabel=" нет"];
+    show_order -> confirm;
+    confirm:w -> cancel_order:n [xlabel="нет "];
+    cancel_order -> cancel_b;
+    confirm:s -> save_order:n [xlabel=" да"];
+    save_order -> saved;
+    saved:e -> save_error:n [xlabel=" нет"];
+    save_error:e -> show_order:e;
+    saved:s -> saved_a [xlabel=" да"];
+
+    {rank=same; to_catalog_a; load_catalog;}
+    {rank=same; to_catalog_b; show_catalog;}
+    {rank=same; want_exit; finish;}
+    {rank=same; add_more; add_more_b;}
+}

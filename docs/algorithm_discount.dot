@@ -1,0 +1,27 @@
+// Блок-схема алгоритма расчёта цены товара с учётом скидки (ГОСТ 19.701-90).
+// Сборка PDF: dot -Tpdf docs/algorithm_discount.dot -o docs/algorithm_discount.pdf
+digraph algorithm_discount {
+    graph [fontname="Calibri", fontsize=18, labelloc=t, pad=0.4, nodesep=0.6, ranksep=0.45,
+           splines=ortho, label=<<B>Алгоритм расчёта цены товара с учётом скидки</B><BR/> >];
+    node [fontname="Calibri", fontsize=12, shape=box, width=3.2, margin="0.2,0.1"];
+    edge [fontname="Calibri", fontsize=11, arrowsize=0.7];
+
+    start      [label="Начало", style=rounded];
+    input      [label="Базовая цена товара P,\nдата расчёта D", shape=parallelogram];
+    period     [label="Период — предыдущий календарный месяц:\nс 1-го числа месяца, предшествующего\nмесяцу даты D, до 1-го числа месяца D\n(для января — декабрь прошлого года)"];
+    count      [label="N — количество заказов товара\nс датой заказа внутри периода"];
+    has_orders [label="N = 0?", shape=diamond, width=1.6, height=0.9];
+    discount25 [label="Скидка S = 25 %", width=2.2];
+    discount0  [label="Скидка S = 0 %", width=2.2];
+    price      [label="Цена = P × (100 − S) / 100,\nокругление до копеек"];
+    output     [label="Цена товара со скидкой", shape=parallelogram];
+    finish     [label="Конец", style=rounded];
+
+    start -> input -> period -> count -> has_orders;
+    has_orders -> discount25 [xlabel="да "];
+    has_orders -> discount0  [xlabel=" нет"];
+    {rank=same; discount25; discount0;}
+    discount25 -> price;
+    discount0 -> price;
+    price -> output -> finish;
+}
