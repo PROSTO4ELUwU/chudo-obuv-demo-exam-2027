@@ -1,11 +1,30 @@
 """Общие элементы интерфейса."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QPushButton, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
 
 ALIGN_LEFT = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 ALIGN_CENTER = Qt.AlignmentFlag.AlignCenter
 ALIGN_RIGHT = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+
+def hide_unless(allowed: bool, *widgets: QWidget) -> None:
+    """Скрывает элементы, недоступные пользователю.
+
+    Показывать их явно (setVisible(True)) при создании нельзя: виджет
+    без родителя открылся бы отдельным окном, а внутри страницы
+    элементы и так видны вместе с ней.
+    """
+    if not allowed:
+        for widget in widgets:
+            widget.hide()
 
 
 def accent_button(text: str) -> QPushButton:

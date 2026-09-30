@@ -9,7 +9,14 @@ from chudo_obuv.models import OrderLine, OrderSummary
 from chudo_obuv.repositories import LAST_LINE_MESSAGE, OrderError
 from chudo_obuv.ui import messages
 from chudo_obuv.ui.pages import AppContext, Page
-from chudo_obuv.ui.widgets import ALIGN_CENTER, ALIGN_RIGHT, accent_button, make_table, table_item
+from chudo_obuv.ui.widgets import (
+    ALIGN_CENTER,
+    ALIGN_RIGHT,
+    accent_button,
+    hide_unless,
+    make_table,
+    table_item,
+)
 
 COLUMNS = ["Товарная позиция (модель — производство)", "Размер", "Количество",
            "Цена за единицу", "Сумма"]
@@ -33,15 +40,16 @@ class OrderDetailsPage(Page):
 
         self._number_label = QLabel(objectName="productTitle")
         self._client_label = QLabel()
-        self._date_label = QLabel(visible=not can_edit)
-        self._date_edit = QDateEdit(calendarPopup=True, displayFormat="dd.MM.yyyy", visible=can_edit)
+        self._date_label = QLabel()
+        self._date_edit = QDateEdit(calendarPopup=True, displayFormat="dd.MM.yyyy")
         self._date_edit.setMinimumDate(QDate(2000, 1, 1))
         self._date_edit.setMaximumDate(QDate.currentDate())
         self._date_edit.setToolTip("Дата заказа не может быть позже сегодняшней")
         self._date_edit.dateChanged.connect(self._update_save_button)
         self._save_date_button = accent_button("Сохранить дату")
-        self._save_date_button.setVisible(can_edit)
         self._save_date_button.clicked.connect(self._save_date)
+        hide_unless(not can_edit, self._date_label)
+        hide_unless(can_edit, self._date_edit, self._save_date_button)
         date_row = QHBoxLayout()
         date_row.addWidget(self._date_label)
         date_row.addWidget(self._date_edit)
@@ -55,9 +63,10 @@ class OrderDetailsPage(Page):
 
         self._table = make_table(COLUMNS)
         self._total_label = QLabel(objectName="total")
-        delete_line_button = QPushButton("Удалить позицию", visible=can_edit)
+        delete_line_button = QPushButton("Удалить позицию")
         delete_line_button.setToolTip("Удалить выбранную позицию; пары вернутся в остатки")
         delete_line_button.clicked.connect(self._delete_line)
+        hide_unless(can_edit, delete_line_button)
         bottom_row = QHBoxLayout()
         bottom_row.addWidget(self._total_label)
         bottom_row.addStretch()
@@ -78,7 +87,8 @@ class OrderDetailsPage(Page):
             messages.show_database_error(self, error)
             return
         if order is None:
-            messages.show_warning(self, f"Заказ №{self._order_id} не найден — возможно, его удалили.")
+            messages.show_warning(self, f"Заказ №{self._order_id} не найден — "
+                                        "возможно, его удалили.")
             self.navigator.go_back()
             return
         self._order = order
@@ -113,7 +123,8 @@ class OrderDetailsPage(Page):
         except psycopg.Error as error:
             messages.show_database_error(self, error)
             return
-        messages.show_info(self, f"Дата заказа №{self._order_id} изменена на {format_date(new_date)}.")
+        messages.show_info(self, f"Дата заказа №{self._order_id} изменена "
+                                 f"на {format_date(new_date)}.")
         self.on_activated()
 
     def _delete_line(self) -> None:

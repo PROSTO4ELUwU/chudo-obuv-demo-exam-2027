@@ -22,6 +22,7 @@ from chudo_obuv.models import Product
 from chudo_obuv.ui import messages
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.product_card import ProductCard
+from chudo_obuv.ui.widgets import hide_unless
 
 
 class CatalogPage(Page):
@@ -43,43 +44,6 @@ class CatalogPage(Page):
         self._products: list[Product] = []
         self._cards: dict[int, ProductCard] = {}
 
-        self._search_edit = QLineEdit(placeholderText="Наименование или описание товара",
-                                      clearButtonEnabled=True)
-        self._search_edit.textChanged.connect(self._apply_filters)
-        self._category_combo = QComboBox(sizeAdjustPolicy=QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self._category_combo.currentTextChanged.connect(self._apply_filters)
-        self._sort_combo = QComboBox(sizeAdjustPolicy=QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self._sort_combo.addItems([order.value for order in SortOrder])
-        self._sort_combo.currentTextChanged.connect(self._apply_filters)
-        self._found_label = QLabel(objectName="hint")
-
-        filter_panel = QFrame(objectName="panel")
-        filters = QHBoxLayout(filter_panel)
-        filters.addWidget(QLabel("Поиск:"))
-        filters.addWidget(self._search_edit, stretch=1)
-        filters.addWidget(QLabel("Категория:"))
-        filters.addWidget(self._category_combo)
-        filters.addWidget(QLabel("Сортировка:"))
-        filters.addWidget(self._sort_combo)
-        filters.addWidget(self._found_label)
-        filter_panel.setVisible(context.user.can_order)
-
-        self._draft_button = QPushButton()
-        self._draft_button.setToolTip("Просмотреть выбранные товары и подтвердить заказ")
-        self._draft_button.clicked.connect(lambda: self.navigator.show_order_draft())
-        self._draft_button.setVisible(context.user.can_order)
-        orders_button = QPushButton("Заказы")
-        orders_button.setToolTip("Список заказов: просмотр состава, добавление и удаление")
-        orders_button.clicked.connect(lambda: self.navigator.show_orders())
-        orders_button.setVisible(context.user.can_manage_orders and not select_for_order)
-        actions = QHBoxLayout()
-        if select_for_order:
-            actions.addWidget(QLabel("Найдите товар по наименованию и нажмите на карточку, "
-                                     "чтобы выбрать размер и количество", objectName="hint"))
-        actions.addStretch()
-        actions.addWidget(orders_button)
-        actions.addWidget(self._draft_button)
-
         container = QWidget(objectName="cardsContainer")
         self._cards_layout = QVBoxLayout(container)
         self._cards_layout.setSpacing(10)
@@ -94,10 +58,56 @@ class CatalogPage(Page):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
-        layout.addWidget(filter_panel)
-        layout.addLayout(actions)
+        layout.addWidget(self._build_filter_panel())
+        layout.addLayout(self._build_actions())
         layout.addWidget(self._empty_label)
         layout.addWidget(scroll, stretch=1)
+
+    def _build_filter_panel(self) -> QFrame:
+        """Поиск, фильтр по категории и сортировка — только для авторизованных."""
+        self._search_edit = QLineEdit(placeholderText="Наименование или описание товара",
+                                      clearButtonEnabled=True)
+        self._search_edit.textChanged.connect(self._apply_filters)
+        adjust_to_contents = QComboBox.SizeAdjustPolicy.AdjustToContents
+        self._category_combo = QComboBox(sizeAdjustPolicy=adjust_to_contents)
+        self._category_combo.currentTextChanged.connect(self._apply_filters)
+        self._sort_combo = QComboBox(sizeAdjustPolicy=adjust_to_contents)
+        self._sort_combo.addItems([order.value for order in SortOrder])
+        self._sort_combo.currentTextChanged.connect(self._apply_filters)
+        self._found_label = QLabel(objectName="hint")
+
+        panel = QFrame(objectName="panel")
+        layout = QHBoxLayout(panel)
+        layout.addWidget(QLabel("Поиск:"))
+        layout.addWidget(self._search_edit, stretch=1)
+        layout.addWidget(QLabel("Категория:"))
+        layout.addWidget(self._category_combo)
+        layout.addWidget(QLabel("Сортировка:"))
+        layout.addWidget(self._sort_combo)
+        layout.addWidget(self._found_label)
+        hide_unless(self.context.user.can_order, panel)
+        return panel
+
+    def _build_actions(self) -> QHBoxLayout:
+        """Переходы к формируемому заказу и к списку заказов."""
+        user = self.context.user
+        self._draft_button = QPushButton()
+        self._draft_button.setToolTip("Просмотреть выбранные товары и подтвердить заказ")
+        self._draft_button.clicked.connect(self.navigator.show_order_draft)
+        hide_unless(user.can_order, self._draft_button)
+        orders_button = QPushButton("Заказы")
+        orders_button.setToolTip("Список заказов: просмотр состава, добавление и удаление")
+        orders_button.clicked.connect(self.navigator.show_orders)
+        hide_unless(user.can_manage_orders and not self.select_for_order, orders_button)
+
+        layout = QHBoxLayout()
+        if self.select_for_order:
+            layout.addWidget(QLabel("Найдите товар по наименованию и нажмите на карточку, "
+                                    "чтобы выбрать размер и количество", objectName="hint"))
+        layout.addStretch()
+        layout.addWidget(orders_button)
+        layout.addWidget(self._draft_button)
+        return layout
 
     def on_activated(self) -> None:
         """Каталог перечитывается при каждом показе: остатки могли измениться."""
