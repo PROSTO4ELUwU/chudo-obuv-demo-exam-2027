@@ -1,0 +1,2 @@
+// Иконка exe-файла в проводнике Windows (из ресурсов заказчика)
+IDI_ICON1 ICON "../resources/icon.ico"
