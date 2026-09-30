@@ -27,7 +27,10 @@ public:
     void exec(QSqlQuery &query);
 
     // Транзакция по принципу RAII: если commit() не вызван (например,
-    // из-за исключения), изменения откатываются в деструкторе
+    // из-за исключения), изменения откатываются в деструкторе.
+    // Вложенная транзакция становится точкой сохранения (SAVEPOINT) —
+    // так тесты оборачивают работу репозиториев во внешнюю транзакцию,
+    // которая всегда откатывается.
     class Transaction
     {
     public:
@@ -40,10 +43,17 @@ public:
         void commit();
 
     private:
+        void execute(const QString &sql);
+        QString savepointName() const;
+
+        Database &m_database;
         QSqlDatabase m_connection;
+        int m_level = 0;
         bool m_finished = false;
     };
 
 private:
     QSqlDatabase openConnection();
+
+    int m_transactionDepth = 0;
 };

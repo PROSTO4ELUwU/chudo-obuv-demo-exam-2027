@@ -64,21 +64,55 @@ void Database::exec(QSqlQuery &query)
 }
 
 Database::Transaction::Transaction(Database &database)
-    : m_connection(database.openConnection())
+    : m_database(database)
+    , m_connection(database.openConnection())
+    , m_level(database.m_transactionDepth + 1)
 {
-    if (!m_connection.transaction())
-        throw DatabaseError(m_connection.lastError().text());
+    if (m_level == 1) {
+        if (!m_connection.transaction())
+            throw DatabaseError(m_connection.lastError().text());
+    } else {
+        execute(QStringLiteral("SAVEPOINT ") + savepointName());
+    }
+    m_database.m_transactionDepth = m_level;
 }
 
 Database::Transaction::~Transaction()
 {
-    if (!m_finished)
-        m_connection.rollback();
+    if (m_finished)
+        return;
+    // Деструктор не должен бросать исключений, поэтому ошибка отката
+    // игнорируется: при разрыве соединения сервер откатит транзакцию сам
+    try {
+        if (m_level == 1)
+            m_connection.rollback();
+        else
+            execute(QStringLiteral("ROLLBACK TO SAVEPOINT ") + savepointName());
+    } catch (const DatabaseError &) {
+    }
+    m_database.m_transactionDepth = m_level - 1;
 }
 
 void Database::Transaction::commit()
 {
-    if (!m_connection.commit())
-        throw DatabaseError(m_connection.lastError().text());
+    if (m_level == 1) {
+        if (!m_connection.commit())
+            throw DatabaseError(m_connection.lastError().text());
+    } else {
+        execute(QStringLiteral("RELEASE SAVEPOINT ") + savepointName());
+    }
     m_finished = true;
+    m_database.m_transactionDepth = m_level - 1;
+}
+
+void Database::Transaction::execute(const QString &sql)
+{
+    QSqlQuery query(m_connection);
+    if (!query.exec(sql))
+        throw DatabaseError(query.lastError().text());
+}
+
+QString Database::Transaction::savepointName() const
+{
+    return QStringLiteral("level_%1").arg(m_level);
 }

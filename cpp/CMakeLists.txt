@@ -22,6 +22,7 @@ qt_add_library(chudo_obuv_core STATIC
     src/Money.cpp src/Money.h
     src/OrderDraft.cpp src/OrderDraft.h
     src/Pricing.cpp src/Pricing.h
+    src/Repositories.cpp src/Repositories.h
 )
 target_include_directories(chudo_obuv_core PUBLIC src)
 target_link_libraries(chudo_obuv_core PUBLIC Qt6::Widgets Qt6::Sql)
@@ -33,7 +34,9 @@ qt_add_executable(ChudoObuv WIN32 src/main.cpp)
 target_link_libraries(ChudoObuv PRIVATE chudo_obuv_core)
 
 enable_testing()
-qt_add_executable(tst_logic tests/tst_logic.cpp)
-set_target_properties(tst_logic PROPERTIES WIN32_EXECUTABLE OFF)
-target_link_libraries(tst_logic PRIVATE chudo_obuv_core Qt6::Test)
-add_test(NAME tst_logic COMMAND tst_logic)
+foreach(test_name tst_logic tst_repositories)
+    qt_add_executable(${test_name} tests/${test_name}.cpp)
+    set_target_properties(${test_name} PROPERTIES WIN32_EXECUTABLE OFF)
+    target_link_libraries(${test_name} PRIVATE chudo_obuv_core Qt6::Test)
+    add_test(NAME ${test_name} COMMAND ${test_name})
+endforeach()
