@@ -38,6 +38,7 @@ ProductPage::ProductPage(AppContext &context, int productId)
     m_name->setObjectName(QStringLiteral("productTitle"));
     m_manufacturer = new QLabel;
     m_category = new QLabel;
+    m_priceCaption = new QLabel;
     m_price = new QLabel;
     m_price->setObjectName(QStringLiteral("price"));
     m_oldPrice = new QLabel;
@@ -58,7 +59,7 @@ ProductPage::ProductPage(AppContext &context, int productId)
     details->addRow(m_name);
     details->addRow(QStringLiteral("Производство:"), m_manufacturer);
     details->addRow(QStringLiteral("Категория:"), m_category);
-    details->addRow(QStringLiteral("Цена со скидкой:"), prices);
+    details->addRow(m_priceCaption, prices);
     details->addRow(QStringLiteral("Состав:"), m_composition);
     details->addRow(QStringLiteral("Описание:"), m_description);
     details->addRow(QStringLiteral("Размерный ряд:"), m_sizeRange);
@@ -129,6 +130,9 @@ void ProductPage::showProduct(const Product &product)
     m_name->setText(product.name);
     m_manufacturer->setText(product.manufacturer);
     m_category->setText(product.category);
+    // Цена всегда с учётом скидки; если скидки нет, подпись не обещает её
+    m_priceCaption->setText(product.hasDiscount() ? QStringLiteral("Цена со скидкой:")
+                                                  : QStringLiteral("Цена:"));
     m_price->setText(Formatting::money(product.price));
     m_oldPrice->setText(product.hasDiscount() ? Formatting::money(product.basePrice) : QString());
     m_composition->setText(product.composition);

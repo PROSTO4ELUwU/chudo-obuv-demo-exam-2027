@@ -42,6 +42,7 @@ private:
     QLabel *m_name = nullptr;
     QLabel *m_manufacturer = nullptr;
     QLabel *m_category = nullptr;
+    QLabel *m_priceCaption = nullptr;
     QLabel *m_price = nullptr;
     QLabel *m_oldPrice = nullptr;
     QLabel *m_composition = nullptr;
