@@ -45,13 +45,18 @@ class OrdersPage(Page):
         layout.addWidget(self._table, stretch=1)
 
     def on_activated(self) -> None:
-        """Список обновляется после добавления, изменения и удаления заказов."""
+        """Список обновляется после добавления, изменения и удаления заказов.
+
+        Выделенным остаётся тот же заказ, а не строка с тем же номером:
+        после удаления заказа на его месте оказался бы другой.
+        """
         selected = self._selected_order()
         try:
             self._orders = self.context.orders.list_orders()
         except psycopg.Error as error:
             messages.show_database_error(self, error)
             return
+        self._table.clearSelection()
         self._table.setRowCount(len(self._orders))
         for row, order in enumerate(self._orders):
             self._table.setItem(row, 0, table_item(str(order.order_id), ALIGN_CENTER))

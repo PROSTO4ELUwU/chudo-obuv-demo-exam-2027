@@ -94,6 +94,8 @@ void OrderDetailsPage::onActivated()
     }
     updateSaveButton();
 
+    // После удаления позиции в той же строке оказалась бы соседняя
+    m_table->clearSelection();
     m_table->setRowCount(static_cast<int>(lines.size()));
     for (int row = 0; row < static_cast<int>(lines.size()); ++row) {
         const OrderLine &line = lines[static_cast<std::size_t>(row)];

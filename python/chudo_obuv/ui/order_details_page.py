@@ -101,6 +101,8 @@ class OrderDetailsPage(Page):
                                       order.order_date.day))
         self._date_edit.blockSignals(False)
         self._update_save_button()
+        # После удаления позиции в той же строке оказалась бы соседняя
+        self._table.clearSelection()
         self._table.setRowCount(len(lines))
         for row, line in enumerate(lines):
             self._table.setItem(row, 0, table_item(f"{line.product_name} — {line.manufacturer}"))
