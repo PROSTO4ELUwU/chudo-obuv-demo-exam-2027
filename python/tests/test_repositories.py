@@ -12,7 +12,7 @@ from decimal import Decimal
 import psycopg
 import pytest
 
-from chudo_obuv.config import load_database_settings
+from chudo_obuv.config import find_config_file, load_database_settings
 from chudo_obuv.database import Database
 from chudo_obuv.models import Role
 from chudo_obuv.order_draft import DraftLine
@@ -30,7 +30,7 @@ RADUGA = "Кроссовки детские «Радуга» экокожа пе
 
 @pytest.fixture(scope="module")
 def database():
-    database = Database(load_database_settings())
+    database = Database(load_database_settings(find_config_file()))
     try:
         database.check_connection()
     except psycopg.OperationalError as error:

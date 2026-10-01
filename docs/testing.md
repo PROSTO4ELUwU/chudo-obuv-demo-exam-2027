@@ -121,6 +121,6 @@
       ER-диаграмма.
 - [ ] `docs\algorithm_system.pdf`, `docs\algorithm_discount.pdf` — блок-схемы.
 - [ ] `README.md` — описание функциональности; история коммитов на GitHub.
-- [ ] Автоматические тесты: `python -m pytest` (48), `ctest --test-dir cpp\build` (2 набора).
+- [ ] Автоматические тесты: `python -m pytest` (52), `ctest --test-dir cpp\build` (2 набора).
 
 После проверки вернуть исходные данные: `database\deploy.bat`.

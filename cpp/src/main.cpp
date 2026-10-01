@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<Database> database;
     try {
-        database = std::make_unique<Database>(AppConfig::loadDatabaseSettings());
+        database = std::make_unique<Database>(
+            AppConfig::loadDatabaseSettings(AppConfig::findConfigFile()));
         database->checkConnection();
     } catch (const AppError &error) {
         Messages::showError(nullptr,

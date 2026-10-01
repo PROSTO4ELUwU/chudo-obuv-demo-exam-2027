@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 CONFIG_FILE_NAME = "config.ini"
+REQUIRED_KEYS = ("dbname", "user", "password")
+
+
+class ConfigError(Exception):
+    """Файл настроек не найден или заполнен неверно; текст показывается пользователю."""
 
 
 def _is_frozen() -> bool:
@@ -56,17 +61,27 @@ def find_config_file() -> Path:
         candidate = folder / CONFIG_FILE_NAME
         if candidate.is_file():
             return candidate
-    raise FileNotFoundError(f"Файл настроек {CONFIG_FILE_NAME} не найден рядом с приложением")
+    raise ConfigError(f"Файл настроек {CONFIG_FILE_NAME} не найден рядом с приложением")
 
 
-def load_database_settings() -> DatabaseSettings:
-    """Читает раздел [database] из config.ini."""
+def load_database_settings(config_file: Path) -> DatabaseSettings:
+    """Читает раздел [database] файла настроек; при ошибке выбрасывает ConfigError."""
     parser = configparser.ConfigParser()
-    parser.read(find_config_file(), encoding="utf-8")
+    try:
+        parser.read(config_file, encoding="utf-8")
+    except (configparser.Error, UnicodeDecodeError) as error:
+        raise ConfigError(f"Файл {CONFIG_FILE_NAME} заполнен с ошибкой: {error}") from error
+    for key in REQUIRED_KEYS:
+        if not parser.has_option("database", key):
+            raise ConfigError(f"В {CONFIG_FILE_NAME} не указан параметр {key}")
     section = parser["database"]
+    try:
+        port = section.getint("port", 5432)
+    except ValueError as error:
+        raise ConfigError(f"В {CONFIG_FILE_NAME} параметр port должен быть целым числом") from error
     return DatabaseSettings(
         host=section.get("host", "localhost"),
-        port=section.getint("port", 5432),
+        port=port,
         dbname=section["dbname"],
         user=section["user"],
         password=section["password"],

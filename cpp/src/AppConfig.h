@@ -18,7 +18,7 @@ namespace AppConfig {
 // файл в корне репозитория подходит и для сборки в cpp/build, и для bin/cpp
 QString findConfigFile();
 
-// Читает раздел [database] из config.ini; при ошибке бросает ConfigError
-DatabaseSettings loadDatabaseSettings();
+// Читает раздел [database] файла настроек; при ошибке бросает ConfigError
+DatabaseSettings loadDatabaseSettings(const QString &fileName);
 
 } // namespace AppConfig

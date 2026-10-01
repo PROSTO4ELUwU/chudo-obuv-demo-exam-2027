@@ -10,7 +10,7 @@ from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication
 
 from chudo_obuv import APP_NAME
-from chudo_obuv.config import ICON_FILE, load_database_settings
+from chudo_obuv.config import ICON_FILE, ConfigError, find_config_file, load_database_settings
 from chudo_obuv.database import Database
 from chudo_obuv.repositories import OrderRepository, ProductRepository, UserRepository
 from chudo_obuv.ui import messages
@@ -63,9 +63,9 @@ def main() -> int:
     sys.excepthook = handle_unexpected_error
 
     try:
-        database = Database(load_database_settings())
+        database = Database(load_database_settings(find_config_file()))
         database.check_connection()
-    except (OSError, KeyError, psycopg.Error) as error:
+    except (ConfigError, psycopg.Error) as error:
         messages.show_error(
             None,
             "Не удалось подключиться к базе данных «Чудо Обувь».\n\n"

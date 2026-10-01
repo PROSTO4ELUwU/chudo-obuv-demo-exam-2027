@@ -60,7 +60,8 @@ private:
 void RepositoriesTest::initTestCase()
 {
     try {
-        m_database = std::make_unique<Database>(AppConfig::loadDatabaseSettings());
+        m_database = std::make_unique<Database>(
+            AppConfig::loadDatabaseSettings(AppConfig::findConfigFile()));
         m_database->checkConnection();
     } catch (const AppError &error) {
         QSKIP(qPrintable(u"База данных недоступна: "_s + error.message()));

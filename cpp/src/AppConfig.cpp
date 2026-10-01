@@ -22,9 +22,9 @@ QString findConfigFile()
     throw ConfigError(QStringLiteral("Файл настроек config.ini не найден рядом с приложением"));
 }
 
-DatabaseSettings loadDatabaseSettings()
+DatabaseSettings loadDatabaseSettings(const QString &fileName)
 {
-    QSettings config(findConfigFile(), QSettings::IniFormat);
+    QSettings config(fileName, QSettings::IniFormat);
     config.beginGroup(QStringLiteral("database"));
     for (const auto key : {"dbname", "user", "password"}) {
         if (!config.contains(QString::fromLatin1(key)))
@@ -32,7 +32,10 @@ DatabaseSettings loadDatabaseSettings()
     }
     DatabaseSettings settings;
     settings.host = config.value(QStringLiteral("host"), QStringLiteral("localhost")).toString();
-    settings.port = config.value(QStringLiteral("port"), 5432).toInt();
+    bool portIsNumber = false;
+    settings.port = config.value(QStringLiteral("port"), 5432).toInt(&portIsNumber);
+    if (!portIsNumber)
+        throw ConfigError(QStringLiteral("В config.ini параметр port должен быть целым числом"));
     settings.databaseName = config.value(QStringLiteral("dbname")).toString();
     settings.userName = config.value(QStringLiteral("user")).toString();
     settings.password = config.value(QStringLiteral("password")).toString();

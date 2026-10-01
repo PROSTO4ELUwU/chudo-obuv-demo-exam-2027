@@ -1,11 +1,14 @@
 // Тесты логики без базы данных и окон (Qt Test)
 
+#include "AppConfig.h"
 #include "CatalogFilter.h"
+#include "Errors.h"
 #include "Formatting.h"
 #include "Money.h"
 #include "OrderDraft.h"
 #include "Pricing.h"
 
+#include <QTemporaryDir>
 #include <QTest>
 
 using namespace Qt::StringLiterals;
@@ -57,6 +60,17 @@ QList<int> ids(const std::vector<Product> &products)
     return result;
 }
 
+const QByteArray requiredSettings = "dbname=chudo_obuv\nuser=app\npassword=secret\n";
+
+QString writeConfig(const QTemporaryDir &folder, const QByteArray &text)
+{
+    const QString fileName = folder.filePath(u"config.ini"_s);
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly) || file.write(text) != text.size())
+        qFatal("Не удалось записать временный config.ini");
+    return fileName;
+}
+
 } // namespace
 
 class LogicTest : public QObject
@@ -89,6 +103,10 @@ private slots:
     void categoryAndSearchWorkTogether();
     void sortingIsKeptWithFilter();
     void nothingFound();
+
+    void configHostAndPortHaveDefaults();
+    void configMissingParameterIsNamed();
+    void configPortMustBeInteger();
 };
 
 void LogicTest::previousMonth_data()
@@ -300,6 +318,35 @@ void LogicTest::sortingIsKeptWithFilter()
 void LogicTest::nothingFound()
 {
     QVERIFY(filterProducts(catalog, u"сандалии"_s, allCategoriesName(), SortOrder::None).empty());
+}
+
+void LogicTest::configHostAndPortHaveDefaults()
+{
+    const QTemporaryDir folder;
+    const DatabaseSettings settings =
+        AppConfig::loadDatabaseSettings(writeConfig(folder, "[database]\n" + requiredSettings));
+    QCOMPARE(settings.host, u"localhost"_s);
+    QCOMPARE(settings.port, 5432);
+    QCOMPARE(settings.databaseName, u"chudo_obuv"_s);
+}
+
+void LogicTest::configMissingParameterIsNamed()
+{
+    const QTemporaryDir folder;
+    const QString fileName = writeConfig(folder, "[database]\ndbname=chudo_obuv\nuser=app\n");
+    try {
+        AppConfig::loadDatabaseSettings(fileName);
+        QFAIL("Ожидалась ошибка ConfigError");
+    } catch (const ConfigError &error) {
+        QVERIFY(error.message().contains(u"не указан параметр password"_s));
+    }
+}
+
+void LogicTest::configPortMustBeInteger()
+{
+    const QTemporaryDir folder;
+    const QString fileName = writeConfig(folder, "[database]\nport=5432a\n" + requiredSettings);
+    QVERIFY_THROWS_EXCEPTION(ConfigError, AppConfig::loadDatabaseSettings(fileName));
 }
 
 QTEST_APPLESS_MAIN(LogicTest)
