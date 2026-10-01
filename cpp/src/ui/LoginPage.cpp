@@ -1,5 +1,6 @@
 #include "ui/LoginPage.h"
 
+#include "ui/Images.h"
 #include "ui/Messages.h"
 #include "ui/Widgets.h"
 
@@ -11,13 +12,18 @@
 #include <QToolTip>
 #include <QVBoxLayout>
 
+namespace {
+
+constexpr QSize logoSize(140, 140);
+
+} // namespace
+
 LoginPage::LoginPage(AppContext &context)
     : Page(context)
 {
     auto *logo = new QLabel;
     logo->setAlignment(Qt::AlignCenter);
-    logo->setPixmap(QPixmap(QStringLiteral(":/logo.png"))
-                        .scaled(140, 140, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logo->setPixmap(Images::logo(logoSize));
 
     auto *heading = new QLabel(QStringLiteral("Вход в систему"));
     heading->setObjectName(QStringLiteral("appTitle"));

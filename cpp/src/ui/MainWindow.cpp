@@ -1,6 +1,7 @@
 #include "ui/MainWindow.h"
 
 #include "ui/CatalogPage.h"
+#include "ui/Images.h"
 #include "ui/LoginPage.h"
 #include "ui/Messages.h"
 #include "ui/OrderDetailsPage.h"
@@ -19,7 +20,7 @@
 
 namespace {
 
-constexpr int logoSize = 56;
+constexpr QSize logoSize(56, 56);
 const QString appName = QStringLiteral("Чудо Обувь");
 
 } // namespace
@@ -49,9 +50,7 @@ QWidget *MainWindow::buildHeader()
     connect(m_backButton, &QPushButton::clicked, this, &MainWindow::goBack);
 
     auto *logo = new QLabel;
-    logo->setPixmap(QPixmap(QStringLiteral(":/logo.png"))
-                        .scaled(logoSize, logoSize, Qt::KeepAspectRatio,
-                                Qt::SmoothTransformation));
+    logo->setPixmap(Images::logo(logoSize));
     auto *appTitle = new QLabel(appName);
     appTitle->setObjectName(QStringLiteral("appTitle"));
     m_pageTitle = new QLabel;

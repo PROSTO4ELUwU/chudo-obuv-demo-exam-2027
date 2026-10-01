@@ -1,7 +1,7 @@
 """Главное окно: шапка с логотипом и ФИО пользователя, стек страниц."""
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QCloseEvent, QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -14,10 +14,10 @@ from PySide6.QtWidgets import (
 )
 
 from chudo_obuv import APP_NAME
-from chudo_obuv.config import LOGO_FILE
 from chudo_obuv.models import GUEST, Role, User
 from chudo_obuv.ui import messages
 from chudo_obuv.ui.catalog_page import CatalogPage
+from chudo_obuv.ui.images import logo_pixmap
 from chudo_obuv.ui.login_page import LoginPage
 from chudo_obuv.ui.order_details_page import OrderDetailsPage
 from chudo_obuv.ui.order_draft_page import OrderDraftPage
@@ -25,7 +25,7 @@ from chudo_obuv.ui.orders_page import OrdersPage
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.product_page import ProductPage
 
-LOGO_SIZE = 56
+LOGO_SIZE = QSize(56, 56)
 
 
 class MainWindow(QMainWindow):
@@ -60,10 +60,7 @@ class MainWindow(QMainWindow):
         self._back_button.clicked.connect(self.go_back)
 
         logo = QLabel()
-        logo.setPixmap(QPixmap(str(LOGO_FILE)).scaled(
-            LOGO_SIZE, LOGO_SIZE,
-            Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation,
-        ))
+        logo.setPixmap(logo_pixmap(LOGO_SIZE))
         self._page_title = QLabel(objectName="pageTitle")
         titles = QVBoxLayout()
         titles.setSpacing(0)

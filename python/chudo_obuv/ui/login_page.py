@@ -1,17 +1,18 @@
 """Вход в систему по логину."""
 
 import psycopg
-from PySide6.QtCore import QPoint, QRegularExpression, Qt
-from PySide6.QtGui import QPixmap, QRegularExpressionValidator
+from PySide6.QtCore import QPoint, QRegularExpression, QSize, Qt
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QToolTip, QVBoxLayout
 
-from chudo_obuv.config import LOGO_FILE
 from chudo_obuv.models import GUEST
 from chudo_obuv.ui import messages
+from chudo_obuv.ui.images import logo_pixmap
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.widgets import accent_button
 
 LOGIN_PATTERN = r"[A-Za-z0-9._-]*"
+LOGO_SIZE = QSize(140, 140)
 
 
 class LoginPage(Page):
@@ -22,9 +23,7 @@ class LoginPage(Page):
     def __init__(self, context: AppContext) -> None:
         super().__init__(context)
         logo = QLabel(alignment=Qt.AlignmentFlag.AlignCenter)
-        logo.setPixmap(QPixmap(str(LOGO_FILE)).scaled(
-            140, 140, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
-        ))
+        logo.setPixmap(logo_pixmap(LOGO_SIZE))
 
         self._login_edit = QLineEdit(placeholderText="Логин", maxLength=50, clearButtonEnabled=True)
         self._login_edit.setValidator(QRegularExpressionValidator(QRegularExpression(LOGIN_PATTERN)))
