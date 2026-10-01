@@ -268,17 +268,27 @@ class OrderRepository:
         """Удаляет позицию заказа и возвращает её пары в остатки.
 
         Единственную позицию удалить нельзя: заказ без товаров не имеет
-        смысла, в этом случае удаляется заказ целиком.
+        смысла, в этом случае удаляется заказ целиком. Строка заказа
+        блокируется (FOR UPDATE), поэтому два администратора не удалят
+        одновременно две последние позиции одного заказа.
         """
         connection = self._database.connection
         with connection.transaction():
-            (lines_count,) = connection.execute(
+            order = connection.execute(
                 """
-                SELECT count(*)
-                FROM order_items
-                WHERE order_id = (SELECT order_id FROM order_items WHERE order_item_id = %s)
+                SELECT o.order_id
+                FROM orders AS o
+                JOIN order_items AS oi ON oi.order_id = o.order_id
+                WHERE oi.order_item_id = %s
+                FOR UPDATE OF o
                 """,
                 (order_item_id,),
+            ).fetchone()
+            # Позицию уже удалили, например в другом окне, — удалять нечего
+            if order is None:
+                return
+            (lines_count,) = connection.execute(
+                "SELECT count(*) FROM order_items WHERE order_id = %s", order
             ).fetchone()
             if lines_count <= 1:
                 raise OrderError(LAST_LINE_MESSAGE)

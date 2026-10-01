@@ -42,6 +42,7 @@ private slots:
     void orderIsNotSavedWhenStockIsShort();
     void deleteOrderReturnsPairsToStock();
     void deleteLineReturnsPairsAndKeepsLastLine();
+    void deletingAlreadyDeletedLineChangesNothing();
     void changeOrderDate();
 
 private:
@@ -193,13 +194,36 @@ void RepositoriesTest::deleteOrderReturnsPairsToStock()
 
 void RepositoriesTest::deleteLineReturnsPairsAndKeepsLastLine()
 {
+    const Product product = productByName(zvezdochka);
+    const auto size20InStock = [&] {
+        for (const StockPosition &position : m_products->listPositions(product.id)) {
+            if (position.sizeTenths == 200)
+                return position.quantity;
+        }
+        return -1;
+    };
+
     const std::vector<OrderLine> lines = m_orders->listLines(1);
     QCOMPARE(lines.size(), 2);
+    QCOMPARE(lines[0].productName, zvezdochka);
+    QCOMPARE(lines[0].sizeTenths, 200);
+    const int inStock = size20InStock();
     m_orders->deleteLine(lines[0].orderItemId);
+    QCOMPARE(size20InStock(), inStock + lines[0].quantity);
     const std::vector<OrderLine> remaining = m_orders->listLines(1);
     QCOMPARE(remaining.size(), 1);
     QCOMPARE(remaining.front().orderItemId, lines[1].orderItemId);
     QVERIFY_THROWS_EXCEPTION(OrderError, m_orders->deleteLine(lines[1].orderItemId));
+}
+
+void RepositoriesTest::deletingAlreadyDeletedLineChangesNothing()
+{
+    const std::vector<OrderLine> lines = m_orders->listLines(4);
+    m_orders->deleteLine(lines[0].orderItemId);
+    const Money total = m_orders->getOrder(4)->total;
+    m_orders->deleteLine(lines[0].orderItemId);
+    QCOMPARE(m_orders->getOrder(4)->total, total);
+    QCOMPARE(m_orders->listLines(4).size(), lines.size() - 1);
 }
 
 void RepositoriesTest::changeOrderDate()

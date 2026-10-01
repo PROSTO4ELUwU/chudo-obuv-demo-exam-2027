@@ -362,12 +362,22 @@ void OrderRepository::changeOrderDate(int orderId, QDate orderDate)
 void OrderRepository::deleteLine(int orderItemId)
 {
     Database::Transaction transaction(m_database);
-    QSqlQuery count = m_database.prepare(QStringLiteral(R"(
-        SELECT count(*)
-        FROM order_items
-        WHERE order_id = (SELECT order_id FROM order_items WHERE order_item_id = :order_item_id)
+    QSqlQuery lock = m_database.prepare(QStringLiteral(R"(
+        SELECT o.order_id
+        FROM orders AS o
+        JOIN order_items AS oi ON oi.order_id = o.order_id
+        WHERE oi.order_item_id = :order_item_id
+        FOR UPDATE OF o
     )"));
-    count.bindValue(QStringLiteral(":order_item_id"), orderItemId);
+    lock.bindValue(QStringLiteral(":order_item_id"), orderItemId);
+    m_database.exec(lock);
+    // Позицию уже удалили, например в другом окне, — удалять нечего
+    if (!lock.next())
+        return;
+
+    QSqlQuery count = m_database.prepare(
+        QStringLiteral("SELECT count(*) FROM order_items WHERE order_id = :order_id"));
+    count.bindValue(QStringLiteral(":order_id"), lock.value(0));
     m_database.exec(count);
     count.next();
     if (count.value(0).toInt() <= 1)

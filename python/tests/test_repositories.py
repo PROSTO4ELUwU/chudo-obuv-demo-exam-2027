@@ -133,12 +133,31 @@ def test_delete_order_returns_pairs_to_stock(db):
 
 def test_delete_line_returns_pairs_and_keeps_last_line(db):
     orders = OrderRepository(db)
+    product = product_by_name(db, ZVEZDOCHKA)
+
+    def size_20_in_stock():
+        positions = ProductRepository(db).list_positions(product.product_id)
+        return next(position.quantity for position in positions if position.size == 20)
+
     lines = orders.list_lines(1)
     assert len(lines) == 2
+    assert (lines[0].product_name, lines[0].size) == (ZVEZDOCHKA, 20)
+    in_stock = size_20_in_stock()
     orders.delete_line(lines[0].order_item_id)
+    assert size_20_in_stock() == in_stock + lines[0].quantity
     assert [line.order_item_id for line in orders.list_lines(1)] == [lines[1].order_item_id]
     with pytest.raises(OrderError, match="единственная позиция"):
         orders.delete_line(lines[1].order_item_id)
+
+
+def test_deleting_already_deleted_line_changes_nothing(db):
+    orders = OrderRepository(db)
+    lines = orders.list_lines(4)
+    orders.delete_line(lines[0].order_item_id)
+    total = orders.get_order(4).total
+    orders.delete_line(lines[0].order_item_id)
+    assert orders.get_order(4).total == total
+    assert len(orders.list_lines(4)) == len(lines) - 1
 
 
 def test_change_order_date(db):
