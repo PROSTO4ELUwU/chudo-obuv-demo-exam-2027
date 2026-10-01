@@ -81,7 +81,7 @@ def main() -> int:
         orders=OrderRepository(database),
     )
     window = MainWindow(context)
-    window.show()
+    window.show_on_screen()
     exit_code = app.exec()
     database.close()
     return exit_code

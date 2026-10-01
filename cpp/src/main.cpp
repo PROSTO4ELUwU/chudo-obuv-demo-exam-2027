@@ -33,6 +33,6 @@ int main(int argc, char *argv[])
     OrderRepository orders(*database);
     AppContext context(users, products, orders);
     MainWindow window(context);
-    window.show();
+    window.showOnScreen();
     return app.exec();
 }

@@ -13,6 +13,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QScreen>
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
@@ -84,6 +85,13 @@ QWidget *MainWindow::buildHeader()
     layout->addLayout(userBox);
     layout->addWidget(m_logoutButton);
     return header;
+}
+
+void MainWindow::showOnScreen()
+{
+    show();
+    if (!screen()->availableGeometry().contains(frameGeometry()))
+        showMaximized();
 }
 
 void MainWindow::login(const User &user)

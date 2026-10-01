@@ -19,6 +19,11 @@ class MainWindow : public QMainWindow, public Navigator
 public:
     explicit MainWindow(AppContext &context);
 
+    // Показывает окно, а если оно не помещается на экране — развёрнутым.
+    // Окно 1180×780 не помещается по высоте на мониторе 1366×768 и на ноутбуке
+    // 1920×1080 с масштабом 150 %: нижний край с кнопками ушёл бы под панель задач.
+    void showOnScreen();
+
     void login(const User &user) override;
     void logout() override;
     void showProduct(int productId) override;

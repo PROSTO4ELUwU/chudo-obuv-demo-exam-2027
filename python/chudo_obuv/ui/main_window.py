@@ -90,6 +90,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._logout_button)
         return header
 
+    def show_on_screen(self) -> None:
+        """Показывает окно, а если оно не помещается на экране — развёрнутым.
+
+        Окно 1180×780 не помещается по высоте на мониторе 1366×768
+        и на ноутбуке 1920×1080 с масштабом 150 %: нижний край с кнопками
+        ушёл бы под панель задач.
+        """
+        self.show()
+        if not self.screen().availableGeometry().contains(self.frameGeometry()):
+            self.showMaximized()
+
     def login(self, user: User) -> None:
         """Вход выполнен: каталог становится первой страницей."""
         self._context.user = user
