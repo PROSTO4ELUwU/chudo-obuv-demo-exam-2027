@@ -8,13 +8,36 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QRegularExpressionValidator>
+#include <QRegularExpression>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QValidator>
+
+#include <algorithm>
 
 namespace {
 
 constexpr QSize logoSize(140, 140);
+
+// Логин: латинские буквы, цифры, точка, дефис и подчёркивание. Пробелы
+// и переносы строк отбрасываются: при копировании логина из ячейки таблицы
+// или из текста они попадают в буфер обмена, и вставка (Ctrl+V) иначе
+// отклонялась бы целиком
+class LoginValidator : public QValidator
+{
+public:
+    using QValidator::QValidator;
+
+    State validate(QString &input, int &pos) const override
+    {
+        const auto isSpace = [](QChar ch) { return ch.isSpace(); };
+        pos -= static_cast<int>(std::count_if(input.cbegin(), input.cbegin() + pos, isSpace));
+        input.removeIf(isSpace);
+        static const QRegularExpression login(
+            QRegularExpression::anchoredPattern(QStringLiteral("[A-Za-z0-9._-]*")));
+        return login.match(input).hasMatch() ? Acceptable : Invalid;
+    }
+};
 
 } // namespace
 
@@ -37,8 +60,7 @@ LoginPage::LoginPage(AppContext &context)
     m_loginEdit->setPlaceholderText(QStringLiteral("Логин"));
     m_loginEdit->setMaxLength(50);
     m_loginEdit->setClearButtonEnabled(true);
-    m_loginEdit->setValidator(new QRegularExpressionValidator(
-        QRegularExpression(QStringLiteral("[A-Za-z0-9._-]*")), m_loginEdit));
+    m_loginEdit->setValidator(new LoginValidator(m_loginEdit));
     connect(m_loginEdit, &QLineEdit::inputRejected, this, &LoginPage::showLoginHint);
     connect(m_loginEdit, &QLineEdit::returnPressed, this, &LoginPage::login);
 

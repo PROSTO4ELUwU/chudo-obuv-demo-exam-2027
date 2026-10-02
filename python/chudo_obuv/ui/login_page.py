@@ -1,8 +1,10 @@
 """Вход в систему по логину."""
 
+import re
+
 import psycopg
-from PySide6.QtCore import QPoint, QRegularExpression, QSize, Qt
-from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtCore import QPoint, QSize, Qt
+from PySide6.QtGui import QValidator
 from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QToolTip, QVBoxLayout
 
 from chudo_obuv.models import GUEST
@@ -11,8 +13,24 @@ from chudo_obuv.ui.images import logo_pixmap
 from chudo_obuv.ui.pages import AppContext, Page
 from chudo_obuv.ui.widgets import accent_button
 
-LOGIN_PATTERN = r"[A-Za-z0-9._-]*"
+LOGIN_PATTERN = re.compile(r"[A-Za-z0-9._-]*")
 LOGO_SIZE = QSize(140, 140)
+
+
+class LoginValidator(QValidator):
+    """Логин: латинские буквы, цифры, точка, дефис и подчёркивание.
+
+    Пробелы и переносы строк отбрасываются: при копировании логина из ячейки
+    таблицы или из текста они попадают в буфер обмена, и вставка (Ctrl+V)
+    иначе отклонялась бы целиком.
+    """
+
+    def validate(self, text: str, pos: int) -> tuple[QValidator.State, str, int]:
+        cleaned = "".join(text.split())
+        pos -= sum(char.isspace() for char in text[:pos])
+        if LOGIN_PATTERN.fullmatch(cleaned):
+            return QValidator.State.Acceptable, cleaned, pos
+        return QValidator.State.Invalid, text, pos
 
 
 class LoginPage(Page):
@@ -26,7 +44,7 @@ class LoginPage(Page):
         logo.setPixmap(logo_pixmap(LOGO_SIZE))
 
         self._login_edit = QLineEdit(placeholderText="Логин", maxLength=50, clearButtonEnabled=True)
-        self._login_edit.setValidator(QRegularExpressionValidator(QRegularExpression(LOGIN_PATTERN)))
+        self._login_edit.setValidator(LoginValidator(self._login_edit))
         self._login_edit.inputRejected.connect(self._show_login_hint)
         self._login_edit.returnPressed.connect(self._login)
 
